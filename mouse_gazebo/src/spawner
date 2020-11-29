@@ -19,22 +19,6 @@ if __name__ == '__main__':
 	rospy.wait_for_service('/gazebo/pause_physics')
 	rospy.ServiceProxy('/gazebo/pause_physics', Empty)()
 
-	print('Retrieving args...')
-	parser = argparse.ArgumentParser()
-	parser.add_argument('-x', help='Box x position', type=float, default=rospy.get_param('/launch/box_x'))
-	parser.add_argument('-y', help='Box y position', type=float, default=rospy.get_param('/launch/box_y'))
-	parser.add_argument('-n', help='Number of mice', type=int, default=rospy.get_param('/launch/num_mice'))
-	parser.add_argument('-a', help='Mice starting angle offset (radians)', type=float, default=rospy.get_param('/launch/mice_angle'))
-	parser.add_argument('-r', help='Mice placement radius', type=float, default=rospy.get_param('/launch/mice_radius'))
-	args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
-
-	print('Putting args back in parameter server...')
-	rospy.set_param('/launch/box_x', args.x)
-	rospy.set_param('/launch/box_y', args.y)
-	rospy.set_param('/launch/num_mice', args.n)
-	rospy.set_param('/launch/mice_angle', args.a)
-	rospy.set_param('/launch/mice_radius', args.r)
-
 	# helper funcs
 	def find(pkg):
 		return rospkg.RosPack().get_path(pkg)
@@ -59,33 +43,30 @@ if __name__ == '__main__':
 		spawn(config)
 
 	rospy.wait_for_service('/gazebo/spawn_urdf_model')
-
-	print('Spawning box...')
-	param('box_desc', f'{find("mouse_gazebo")}/models/box.xacro')
-	spawn_model('box', 'box_desc', x=args.x, y=args.y)
-
-	print('Spawning mice...')
 	param('mouse_desc', f'{find("mouse_description")}/urdf/mouse.xacro')
-	for i in range(args.n):
-		ang = args.a + 2 * math.pi / args.n * i
-		print('Spawning', f'mouse{i}')
-		spawn_model(f'mouse{i}', 'mouse_desc', x=round(args.r * math.cos(ang), 5), 
-			y=round(args.r * math.sin(ang), 5), Y=ang - math.pi/2)
+
+	print('Spawning map...')
+
+	print('Spawning ants...')
+	
+	# TEST
+	spawn_model('ants/ant0', 'mouse_desc')
+
+	print('Spawning bees...')
 
 	# more helpers
 	def start_node(pkg, typ, name, ns='/'):
 		subprocess.Popen(['rosrun', pkg, typ, f'__name:={name}', f'__ns:={ns}'], 
 			stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-	print('Giving mice eyes and a brain...')
-	for i in range(args.n):
-		print(f'Mouse {i} you get some organs!')
-		start_node('mouse_description', 'sensor', 'sensor', f'mouse{i}')
-		start_node('mouse_description', 'gps', 'gps', f'mouse{i}')
-		start_node('mouse_description', 'brain', 'brain', f'mouse{i}')
+	print('Giving everybody eyes and a brain...')
+
+	# TEST
+	start_node('mouse_description', 'sensor', 'sensor', 'ants/ant0')
+	start_node('mouse_description', 'brain', 'brain', 'ants/ant0')
 
 	print('Starting the mothership...')
-	start_node('mouse_gazebo', 'mothership', 'mothership')
+	# start_node('mouse_gazebo', 'mothership', 'mothership')
 
 	# TODO wait a little bit for all nodes to start? (by using a topic)
 	rospy.wait_for_service('/gazebo/unpause_physics')

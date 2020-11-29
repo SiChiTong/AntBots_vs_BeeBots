@@ -49,7 +49,6 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   SensorData.msg
-  GPSData.msg
   MouseCommand.msg
   MouseData.msg
 )
