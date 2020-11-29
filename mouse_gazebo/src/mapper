@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+import rospy
+
+from tf2_ros import TransformBroadcaster
+from geometry_msgs.msg import TransformStamped
+from gazebo_msgs.srv import GetModelState
+
+def main():
+	# TODO change this to convert all model info to TF data (actually simpler)
+	# TODO and then turn off publish TF in the mouse.xacro
+
+	br = TransformBroadcaster()
+	rospy.wait_for_service('/gazebo/get_model_state')
+
+	r = rospy.Rate(24) # Hz
+	while not rospy.is_shutdown():
+		t = TransformStamped()
+		t.header.stamp = rospy.Time.now()
+		t.header.frame_id = 'map'
+
+		for i in range(rospy.get_param('launch/num_mice')):
+			t.child_frame_id = f'mouse{i}/map'
+			t.transform.rotation.w = 1 # 0 rotation
+			# rest are 0 by default
+			br.sendTransform(t)
+
+		box = rospy.ServiceProxy('/gazebo/get_model_state', GetModelState)('box', 'world')
+		if box.success:
+			t.child_frame_id = 'box'
+			t.transform.translation = box.pose.position
+			t.transform.rotation = box.pose.orientation
+			br.sendTransform(t)
+
+		r.sleep()
+
+if __name__ == '__main__':
+	rospy.init_node('mapper')
+	try:
+		main()
+	except rospy.ROSInterruptException:
+		pass

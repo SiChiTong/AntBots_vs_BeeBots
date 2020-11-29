@@ -1,0 +1,140 @@
+#!/usr/bin/env python3
+import rospy
+
+from enum import Enum
+import numpy as np
+
+from geometry_msgs.msg import Twist
+from mouse_description.msg import MouseCommand
+from mouse_description.msg import MouseData
+from mouse_description.msg import GPSData
+from mouse_description.msg import SensorData
+
+# DAQ
+cmd = None
+pos = None
+sense = None
+
+# commands from the mothership
+def commandCallback(data):
+	global cmd
+	cmd = data
+
+# position and orientation data
+def gpsCallback(data):
+	global pos
+	pos = data
+
+# bumper and color sensor data
+def sensorCallback(data):
+	global sense
+	sense = data
+
+# Math helpers
+def modpi(ang):
+	while (ang > np.pi):
+		ang -= 2 * np.pi
+	while (ang < -np.pi):
+		ang += 2 * np.pi
+	return ang
+
+def dist(x1, y1, x2, y2):
+	return np.sqrt((y1-y2)**2 + (x1-x2)**2)
+
+def getMouseNum():
+	return int(rospy.get_namespace()[-2])
+
+# Control Loops
+
+# Position based control
+# Uses state machine that performs actions while in a state, not on transition, for cleaner code
+# extremely strange instability above ~1.5m/s, happens in real life too
+# just drive slow and it's ok
+def positionLoop(xd, yd, angd=0, MAXLIN=0.5, MAXANG=8):
+	ex = xd - pos.x
+	ey = yd - pos.y
+
+	elin = np.sqrt(ex*ex + ey*ey) # linear distance error
+	eango = modpi(np.arctan2(ey, ex) - pos.ang) # orientation error
+	eangd = modpi(angd - pos.ang) # desired final angle error
+
+	cmd = Twist()
+	# Perform transitions
+	if positionLoop.state == positionLoop.States.ORIENT:
+		if abs(eango) < 0.005:
+			positionLoop.state = positionLoop.States.BEELINE
+	elif positionLoop.state == positionLoop.States.BEELINE:
+		if elin < 0.001:
+			positionLoop.state = positionLoop.States.ALIGN
+		elif abs(eango) > 0.5:
+			positionLoop.state = positionLoop.States.ORIENT
+	elif positionLoop.state == positionLoop.States.ALIGN:
+		if elin > 0.004:
+			positionLoop.state = positionLoop.States.ORIENT
+	else:
+		rospy.logerr('Invalid state!')
+		return None
+
+	# State actions
+	if positionLoop.state == positionLoop.States.ORIENT:
+		ulin = 0
+		uang = 10 * eango
+	elif positionLoop.state == positionLoop.States.BEELINE:
+		ulin = 10 * elin
+		uang = 10 * eango
+	elif positionLoop.state == positionLoop.States.ALIGN:
+		ulin = 0
+		uang = 10 * eangd
+	else:
+		rospy.logerr('Invalid state!')
+		return None
+
+	# send it off
+	cmd = Twist()
+	cmd.linear.x = np.clip(ulin, 0, MAXLIN)
+	cmd.angular.z = np.clip(uang, -MAXANG, MAXANG)
+
+	return cmd
+
+positionLoop.States = Enum('posStates', 'ORIENT BEELINE ALIGN')
+positionLoop.state = positionLoop.States.ORIENT
+
+
+def main():
+	ns = rospy.get_namespace()
+
+	# internal stuff
+	rospy.Subscriber(ns + 'gps_data', GPSData, gpsCallback)
+	rospy.Subscriber(ns + 'sensor_data', SensorData, sensorCallback)
+	motor = rospy.Publisher(ns + 'cmd_vel', Twist, queue_size=10)
+
+	# wireless comms w/ mothership
+	rospy.Subscriber(ns + 'command', MouseCommand, commandCallback)
+	telem = rospy.Publisher(ns + 'telemetry', MouseData, queue_size=10)
+
+	while not (pos and sense):
+		pass # wait until all sensors are booted
+
+	r = rospy.Rate(30)
+	while not rospy.is_shutdown():
+		# movement commands
+		if cmd:
+			if cmd.type == MouseCommand.POSITION:
+				motor.publish(positionLoop(cmd.x, cmd.y, cmd.ang))
+			else:
+				rospy.logerr('Invalid command!')
+
+		# TODO box position estimation
+		msg = MouseData()
+		msg.pos = pos
+		msg.boxPos = pos
+		telem.publish(msg)
+
+		r.sleep()
+
+if __name__ == '__main__':
+	rospy.init_node('brain')
+	try:
+		main()
+	except rospy.ROSInterruptException:
+		pass

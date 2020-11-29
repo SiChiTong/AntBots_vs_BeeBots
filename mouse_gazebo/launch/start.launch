@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+<launch>
+	<arg name="box_x" default="1"/>
+	<arg name="box_y" default="1"/>
+	<arg name="num_mice" default="4"/>
+	<arg name="mice_angle" default="0"/>
+	<arg name="mice_radius" default="0.25"/>
+
+	<!-- Throw everything in the parameter server -->
+	<param name="launch/box_x" value="$(arg box_x)" type="double"/>
+	<param name="launch/box_y" value="$(arg box_y)" type="double"/>
+	<param name="launch/num_mice" value="$(arg num_mice)" type="int"/>
+	<param name="launch/mice_angle" value="$(arg mice_angle)" type="double"/>
+	<param name="launch/mice_radius" value="$(arg mice_radius)" type="double"/>
+
+	<include file="$(find gazebo_ros)/launch/empty_world.launch">
+		<arg name="paused" value="true"/>
+		<arg name="use_sim_time" value="true"/>
+	</include>
+
+	<node pkg="mouse_gazebo" type="spawner" name="spawner" output="screen"/>
+	<node pkg="mouse_gazebo" type="mapper" name="mapper" required="true"/>
+</launch>

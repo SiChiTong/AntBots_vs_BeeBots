@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+import rospy
+
+import numpy as np
+
+from mouse_description.msg import MouseCommand
+from mouse_description.msg import MouseData
+
+N = rospy.get_param('launch/num_mice')
+
+# DAQ
+miceData = [None] * N
+
+def mouseCallback(data, num):
+	miceData[num] = data
+
+# Math helpers
+def dist(x1, y1, x2, y2):
+	return np.sqrt((y1-y2)**2 + (x1-x2)**2)
+
+def main():
+	miceControl = []
+	for i in range(N):
+		rospy.Subscriber(f'mouse{i}/telemetry', MouseData, mouseCallback, i)
+		miceControl.append(rospy.Publisher(f'mouse{i}/command', MouseCommand, queue_size=10))
+
+	while not all(miceData):
+		pass # wait for mice to bootup and send telemetry
+
+	# TODO DEMO REMOVE LATER
+	poses = [(1,0,np.pi/2), (0,1,np.pi), (-1,0,-np.pi/2), (0,-1,0)]
+
+	r = rospy.Rate(30)
+	while not rospy.is_shutdown():
+		# TODO DEMO REMOVE LATER
+		if sum([dist(miceData[i].pos.x, miceData[i].pos.y, poses[i][0], poses[i][1]) for i in range(N)]) < 0.01:
+			poses = poses[1:] + [poses[0]]
+
+		for i in range(N):
+			cmd = MouseCommand()
+			cmd.type = MouseCommand.POSITION
+			cmd.x = poses[i][0]
+			cmd.y = poses[i][1]
+			cmd.ang = poses[i][2]
+			miceControl[i].publish(cmd)
+
+		r.sleep()
+
+if __name__ == '__main__':
+	rospy.init_node('mothership')
+	try:
+		main()
+	except rospy.ROSInterruptException:
+		pass
