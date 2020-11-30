@@ -43,4 +43,37 @@ You can also clone this repo into your own workspace!
 	catkin_make
 	source devel/setup.sh
 
+	# Start everything
+	roslaunch mouse_gazebo start.launch
+
+	# Restart w/o killing Gazebo (decently reliable)
+	rosrun mouse_gazebo killer
+	rosrun mouse_gazebo spawner
+
+	# Tip to kill stuff super quick
+	rosnode kill -a
+
+	# Tip in case processes don't die properly
 	pkill python3
+
+	# Tip for viewing debugging messages on /rosout
+	rosconsole echo -l debug
+
+## Stuff of Interest
+
+	# Internal components to mice
+	/mouse*/sensor_data # nothing rn
+	/mouse*/cmd_vel # commands to motors (runs thru a control loop in Gazebo)
+
+	# Wireless comms w/ mothership
+	/ants/ant*/command # forward, turn left, or turn right
+	/ants/ant*/telemetry # discretized position/orientation + if reached
+
+	# "Threads" running per mouse
+	/ants/ant*/sensor # nothing rn
+	/ants/ant*/brain # control loop to reach discretized position
+
+	# The mothership that oversees all
+	/ants/mothership
+
+	# Equivalent topics/nodes found under /bees
