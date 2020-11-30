@@ -1,0 +1,172 @@
+<?xml version="1.0" ?>
+<robot name="mouse" xmlns:xacro="http://www.ros.org/wiki/xacro">
+	<xacro:property name="wheel_sep" value="0.069"/>
+	<xacro:property name="wheel_dia" value="0.034"/>
+	<xacro:property name="wheel_torque" value="0.015"/>
+	<xacro:property name="wheel_veloc" value="105"/>
+
+	<link name="base_link">
+		<visual>
+			<geometry>
+				<mesh filename="package://mouse_description/meshes/mouse_base.dae" scale="1 1 1"/>
+			</geometry>
+		</visual>
+
+		<collision name="base_link_collision">
+			<geometry>
+				<mesh filename="package://mouse_description/meshes/mouse_base.dae" scale="1 1 1"/>
+			</geometry>
+
+			<surface>
+				<contact>
+					<collide_bitmask>0x0</collide_bitmask>
+				</contact>
+			</surface>
+		</collision>
+
+		<inertial>
+			<origin xyz="0 -0.004502 0.011265" rpy="0 0 0"/>
+			<mass value="0.077"/>
+			<inertia
+        		ixx="1.956e-5" ixy="3.869e-18" ixz="0.0"
+        		iyy="1.775e-5" iyz="2.795e-7"
+        		izz="3.367e-5"/>
+		</inertial>
+	</link>
+
+	<gazebo reference="base_link">
+		<mu1>0.1</mu1>
+		<mu2>0.1</mu2>
+		<kp>1000000.0</kp>
+		<kd>100.0</kd>
+		<minDepth>0.0001</minDepth>
+		<maxVel>1.0</maxVel>
+		<material>Gazebo/Blue</material>
+	</gazebo>
+
+	<!-- Actuation -->
+	<link name="left_wheel">
+		<visual>
+			<geometry>
+				<mesh filename="package://mouse_description/meshes/mouse_wheel.dae" scale="1 1 1"/>
+			</geometry>
+		</visual>
+
+		<collision name="left_wheel_collision">
+			<geometry>
+				<mesh filename="package://mouse_description/meshes/mouse_wheel.dae" scale="1 1 1"/>
+			</geometry>
+
+			<surface>
+				<contact>
+					<collide_bitmask>0x0</collide_bitmask>
+				</contact>
+			</surface>
+		</collision>
+
+		<inertial>
+			<mass value="0.015"/>
+			<inertia
+        		ixx="2.196e-6" ixy="0.0" ixz="0.0"
+        		iyy="1.146e-6" iyz="0.0"
+        		izz="1.146e-6"/>
+		</inertial>
+	</link>
+
+	<link name="right_wheel">
+		<visual>
+			<geometry>
+				<mesh filename="package://mouse_description/meshes/mouse_wheel.dae" scale="1 1 1"/>
+			</geometry>
+		</visual>
+
+		<collision name="right_wheel_collision">
+			<geometry>
+				<mesh filename="package://mouse_description/meshes/mouse_wheel.dae" scale="1 1 1"/>
+			</geometry>
+
+			<surface>
+				<contact>
+					<collide_bitmask>0x0</collide_bitmask>
+				</contact>
+			</surface>
+		</collision>
+
+		<inertial>
+			<mass value="0.015"/>
+			<inertia
+        		ixx="2.196e-6" ixy="0.0" ixz="0.0"
+        		iyy="1.146e-6" iyz="0.0"
+        		izz="1.146e-6"/>
+		</inertial>
+	</link>
+
+	<joint name="left_mot" type="continuous">
+		<parent link="base_link"/>
+		<child link="left_wheel"/>
+		<origin xyz="${wheel_sep/2} 0 ${wheel_dia/2}" rpy="0 0 0"/>
+		<axis xyz="-1 0 0"/>
+		<dynamics friction="0.001"/>
+		<limit effort="${wheel_torque}" velocity="${wheel_veloc}"/>
+	</joint>
+
+	<joint name="right_mot" type="continuous">
+		<parent link="base_link"/>
+		<child link="right_wheel"/>
+		<origin xyz="${-wheel_sep/2} 0 ${wheel_dia/2}" rpy="0 0 0"/>
+		<axis xyz="-1 0 0"/>
+		<dynamics friction="0.001"/>
+		<limit effort="${wheel_torque}" velocity="${wheel_veloc}"/>
+	</joint>
+
+	<gazebo reference="left_wheel">
+		<mu1>100.0</mu1>
+		<mu2>100.0</mu2>
+		<kp>1000000.0</kp>
+		<kd>100.0</kd>
+		<minDepth>0.0001</minDepth>
+		<maxVel>1.0</maxVel>
+		<material>Gazebo/Black</material>
+	</gazebo>
+
+	<gazebo reference="right_wheel">
+		<mu1>100.0</mu1>
+		<mu2>100.0</mu2>
+		<kp>1000000.0</kp>
+		<kd>100.0</kd>
+		<minDepth>0.0001</minDepth>
+		<maxVel>1.0</maxVel>
+		<material>Gazebo/Black</material>
+	</gazebo>
+
+	<!-- Gazebo Actuation -->
+	<gazebo>
+		<plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
+			<rosDebugLevel>0</rosDebugLevel>
+			<alwaysOn>true</alwaysOn>
+			<updateRate>120</updateRate>
+			
+			<leftJoint>right_mot</leftJoint>
+			<rightJoint>left_mot</rightJoint>
+			
+			<wheelAcceleration>0</wheelAcceleration>
+			<wheelSeparation>${wheel_sep}</wheelSeparation>
+			<wheelDiameter>${wheel_dia}</wheelDiameter>
+			<wheelTorque>${wheel_torque}</wheelTorque>
+			
+			<commandTopic>cmd_vel</commandTopic>
+			<odometryTopic>odom</odometryTopic>
+
+			<!-- world == perfect positioning -->
+			<odometrySource>world</odometrySource>
+
+			<odometryFrame>map</odometryFrame>
+			<robotBaseFrame>base</robotBaseFrame>
+
+			<publishTf>1</publishTf>
+			<publishWheelTF>false</publishWheelTF>
+			<publishOdomTF>true</publishOdomTF>
+			<publishWheelJointState>false</publishWheelJointState>
+		</plugin>
+	</gazebo>
+</robot>

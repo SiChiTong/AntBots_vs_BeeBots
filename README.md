@@ -42,3 +42,5 @@ You can also clone this repo into your own workspace!
 
 	catkin_make
 	source devel/setup.sh
+
+	pkill python3

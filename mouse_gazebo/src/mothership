@@ -6,17 +6,65 @@ import numpy as np
 from mouse_description.msg import MouseCommand
 from mouse_description.msg import MouseData
 
-# Math helpers
+# Comms
+def mouseCallback(data, num):
+	miceData[num] = data
+
+# Helpers
+def allAligned():
+	return all([d.aligned for d in miceData])
+
 def dist(x1, y1, x2, y2):
 	return np.sqrt((y1-y2)**2 + (x1-x2)**2)
 
 def main():
+	global miceData, miceControl
+	miceData = [None] * NUM
+	miceControl = []
+	for i in range(NUM):
+		rospy.Subscriber(f'{ROLE}{ROLE[1:-2]}{i}/telemetry', MouseData, mouseCallback, i)
+		miceControl.append(rospy.Publisher(f'{ROLE}{ROLE[1:-2]}{i}/command', MouseCommand, queue_size=10))
+
+	while not all(miceData):
+		pass # wait for mice to bootup and send telemetry
+	rospy.sleep(1) # needs a little more
+
+	# DEMO remove later
+	for i in range(NUM):
+		cmd = MouseCommand()
+		cmd.type = MouseCommand.LEFT
+		miceControl[i].publish(cmd)
+
+	while not allAligned():
+		pass
+
+	STATE = 0
+
 	r = rospy.Rate(30)
 	while not rospy.is_shutdown():
+		# DEMO remove later
+		if allAligned():
+			for i in range(NUM):
+				cmd = MouseCommand()
+				# cmd.immediate = True
+				if STATE == 0: # forward
+					cmd.type = MouseCommand.FORWARD
+				elif STATE == 1: # forward
+					cmd.type = MouseCommand.FORWARD
+				elif STATE == 2: # left
+					cmd.type = MouseCommand.LEFT
+				elif STATE == 3: # left
+					cmd.type = MouseCommand.LEFT
+				miceControl[i].publish(cmd)
+			STATE = (STATE + 1) % 4
+
 		r.sleep()
 
 if __name__ == '__main__':
 	rospy.init_node('mothership')
+	global ROLE, NUM
+	ROLE = rospy.get_namespace()
+	NUM = rospy.get_param('/NUM_ANTS' if ROLE=='/ants/' else '/NUM_BEES')
 	try:
 		main()
 	except rospy.ROSInterruptException:

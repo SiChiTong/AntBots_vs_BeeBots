@@ -8,6 +8,7 @@ import sys
 import argparse
 import subprocess
 import math
+import numpy as np
 
 from std_srvs.srv import Empty
 from gazebo_msgs.srv import SpawnModel
@@ -42,31 +43,40 @@ if __name__ == '__main__':
 		config.initial_pose.orientation.w  = q[3]
 		spawn(config)
 
+	def start_node(pkg, typ, name, ns='/', args=None):
+		if args:
+			subprocess.Popen(['rosrun', pkg, typ, f'__name:={name}', f'__ns:={ns}', *args.split(' ')], 
+				stdin=subprocess.PIPE) #, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		else:
+			subprocess.Popen(['rosrun', pkg, typ, f'__name:={name}', f'__ns:={ns}'], 
+				stdin=subprocess.PIPE) #, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
 	rospy.wait_for_service('/gazebo/spawn_urdf_model')
-	param('mouse_desc', f'{find("mouse_description")}/urdf/mouse.xacro')
+	param('ant_desc', f'{find("mouse_description")}/urdf/ant.xacro')
+	param('bee_desc', f'{find("mouse_description")}/urdf/bee.xacro')
+	GRID = rospy.get_param('GRID_SIZE')
 
 	print('Spawning map...')
 
 	print('Spawning ants...')
-	
-	# TEST
-	spawn_model('ants/ant0', 'mouse_desc')
+	for i in range(rospy.get_param('NUM_ANTS')):
+		x, y, a = map(int, rospy.get_param(f'POS_ANT{i}').split(' '))
+		spawn_model(f'ants/ant{i}', 'ant_desc', x=x*GRID, y=y*GRID, Y=(a-1)*np.pi/2)
+		start_node('mouse_description', 'sensor', 'sensor', f'ants/ant{i}')
+		start_node('mouse_description', 'brain', 'brain', f'ants/ant{i}', f'-x {x} -y {y} -a {a}')
 
 	print('Spawning bees...')
+	for i in range(rospy.get_param('NUM_BEES')):
+		x, y, a = map(int, rospy.get_param(f'POS_BEE{i}').split(' '))
+		spawn_model(f'bees/bee{i}', 'bee_desc', x=x*GRID, y=y*GRID, Y=(a-1)*np.pi/2)
+		start_node('mouse_description', 'sensor', 'sensor', f'bees/bee{i}')
+		start_node('mouse_description', 'brain', 'brain', f'bees/bee{i}', f'-x {x} -y {y} -a {a}')
 
-	# more helpers
-	def start_node(pkg, typ, name, ns='/'):
-		subprocess.Popen(['rosrun', pkg, typ, f'__name:={name}', f'__ns:={ns}'], 
-			stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	print('Starting the Ant Queen...')
+	start_node('mouse_gazebo', 'mothership', 'mothership', 'ants')
 
-	print('Giving everybody eyes and a brain...')
-
-	# TEST
-	start_node('mouse_description', 'sensor', 'sensor', 'ants/ant0')
-	start_node('mouse_description', 'brain', 'brain', 'ants/ant0')
-
-	print('Starting the mothership...')
-	# start_node('mouse_gazebo', 'mothership', 'mothership')
+	print('Starting the Queen Bee...')
+	start_node('mouse_gazebo', 'mothership', 'mothership', 'bees')
 
 	# TODO wait a little bit for all nodes to start? (by using a topic)
 	rospy.wait_for_service('/gazebo/unpause_physics')
