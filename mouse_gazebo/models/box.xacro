@@ -1,8 +1,7 @@
 <?xml version="1.0" ?>
 <robot name="box" xmlns:xacro="http://www.ros.org/wiki/xacro">
-<!-- TODO adjust parameters -->
-	<xacro:property name="len" value="0.25"/>
-	<xacro:property name="mass" value="0.5"/>
+	<xacro:property name="len" value="0.099"/>
+	<xacro:property name="mass" value="1"/>
 
 	<link name="base_link">
 		<visual>
@@ -29,10 +28,9 @@
 		</inertial>
 	</link>
 
-<!-- TODO change friction -->
 	<gazebo reference="base_link">
-		<mu1>0.1</mu1>
-		<mu2>0.1</mu2>
-		<material>Gazebo/Blue</material>
+		<mu1>1000000.0</mu1>
+		<mu2>1000000.0</mu2>
+		<material>Gazebo/Black</material>
 	</gazebo>
 </robot>

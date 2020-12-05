@@ -78,3 +78,15 @@ You can also clone this repo into your own workspace!
 	/ants/mothership
 
 	# Equivalent topics/nodes found under /bees
+
+## Build Your Own World
+
+Check out the .txt files.
+
+	  // air
+	# // wall
+	A // ant
+	B // bee
+	F // flag
+
+Numbering for ants and bees is from 0 up, left to right, bottom to top, from the perspective of that team's side. Ants should be at the bottom. All robots start facing the opposite side of the map. The flag is associated with the team whose half of the map it is. Map should be evenly dividable into top and bottom halves.
