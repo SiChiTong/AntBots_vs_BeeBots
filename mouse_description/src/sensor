@@ -1,16 +1,45 @@
 #!/usr/bin/env python3
 import rospy
+
+import math
 import numpy as np
 
 from mouse_description.msg import SensorData
+from sensor_msgs.msg import LaserScan
 
 # Aggregates sensor data
+
+# Constants
+GRID = rospy.get_param('/GRID_SIZE')
+
+# Processing
+def laserCallback(data):
+	pts = [i for i in data.ranges if i != float('inf')]
+	if pts:
+		dist = math.ceil(sum(pts) / len(pts) / GRID)
+	else:
+		dist = 0
+
+	# TODO use god node to do mouse detection
+	outData.leftBot = False
+	outData.rightBot = False
+	outData.centerBot = False
+
+	if 'left_ir' in data.header.frame_id:
+		outData.leftDist = dist
+	elif 'right_ir' in data.header.frame_id:
+		outData.rightDist = dist
+	elif 'center_ir' in data.header.frame_id:
+		outData.centerDist = dist
+	else:
+		rospy.logerr('Invalid frame!')
+
 
 outData = SensorData()
 
 def main():
-	ns = rospy.get_namespace()
-	pub = rospy.Publisher(ns + 'sensor_data', SensorData, queue_size=10)
+	rospy.Subscriber('laser', LaserScan, laserCallback)
+	pub = rospy.Publisher('sensor_data', SensorData, queue_size=10)
 
 	r = rospy.Rate(30)
 	while not rospy.is_shutdown():

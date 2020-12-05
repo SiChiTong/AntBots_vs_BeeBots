@@ -62,15 +62,16 @@ You can also clone this repo into your own workspace!
 ## Stuff of Interest
 
 	# Internal components to mice
-	/mouse*/sensor_data # nothing rn
-	/mouse*/cmd_vel # commands to motors (runs thru a control loop in Gazebo)
+	ants/ant*/sensor_data # nothing rn
+	ants/ant*/cmd_vel # commands to motors (runs thru a control loop in Gazebo)
+	ants/ant*/laser # raw laser sensor data
 
 	# Wireless comms w/ mothership
 	/ants/ant*/command # forward, turn left, or turn right
 	/ants/ant*/telemetry # discretized position/orientation + if reached
 
 	# "Threads" running per mouse
-	/ants/ant*/sensor # nothing rn
+	/ants/ant*/sensor # aggregated laser sensor data
 	/ants/ant*/brain # control loop to reach discretized position
 
 	# The mothership that oversees all

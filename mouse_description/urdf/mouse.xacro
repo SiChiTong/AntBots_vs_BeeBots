@@ -5,6 +5,8 @@
 	<xacro:property name="wheel_torque" value="0.015"/>
 	<xacro:property name="wheel_veloc" value="105"/>
 
+	<xacro:property name="ir_max" value="0.2"/>
+
 	<link name="base_link">
 		<visual>
 			<geometry>
@@ -101,8 +103,8 @@
 	</joint>
 
 	<gazebo reference="left_wheel">
-		<mu1>1.0</mu1>
-		<mu2>1.0</mu2>
+		<mu1>1000.0</mu1>
+		<mu2>1000.0</mu2>
 		<kp>1000000.0</kp>
 		<kd>100.0</kd>
 		<minDepth>0.0001</minDepth>
@@ -111,8 +113,8 @@
 	</gazebo>
 
 	<gazebo reference="right_wheel">
-		<mu1>1.0</mu1>
-		<mu2>1.0</mu2>
+		<mu1>1000.0</mu1>
+		<mu2>1000.0</mu2>
 		<kp>1000000.0</kp>
 		<kd>100.0</kd>
 		<minDepth>0.0001</minDepth>
@@ -149,5 +151,156 @@
 			<publishOdomTF>true</publishOdomTF>
 			<publishWheelJointState>false</publishWheelJointState>
 		</plugin>
+	</gazebo>
+
+	<!-- Sensors -->
+	<link name="left_ir">
+		<visual>
+			<geometry>
+				<sphere radius="0.001"/>
+			</geometry>
+		</visual>
+
+		<inertial>
+			<mass value="1e-5"/>
+			<inertia
+				ixx="1e-6" ixy="0.0" ixz="0.0"
+				iyy="1e-6" iyz="0.0"
+				izz="1e-6"/>
+		</inertial>
+	</link>
+
+	<joint name="left_ir_mnt" type="fixed">
+		<origin xyz="-0.0256 0.0207 0.020" rpy="0 0 3.14159265359"/>
+		<parent link="base_link"/>
+		<child link="left_ir"/>
+	</joint>
+
+	<gazebo reference="left_ir">
+		<material>Gazebo/Red</material>
+		<sensor type="ray" name="left_ir_sens">
+			<pose>0 0 0 0 0 0</pose>
+			<visualize>true</visualize>
+			<update_rate>30</update_rate>
+			<ray>
+				<scan>
+					<horizontal>
+						<samples>3</samples>
+						<resolution>1</resolution> 
+						<min_angle>-0.03</min_angle>
+						<max_angle>0.03</max_angle>
+					</horizontal>
+				</scan>
+				<range>
+					<min>0.001</min>
+					<max>${ir_max}</max>
+					<resolution>0.001</resolution>
+				</range>
+			</ray>
+			<plugin filename="libgazebo_ros_laser.so" name="gazebo_ros_laser">
+				<topicName>laser</topicName>
+				<frameName>left_ir</frameName>
+			</plugin>
+		</sensor>
+	</gazebo>
+
+	<link name="right_ir">
+		<visual>
+			<geometry>
+				<sphere radius="0.001"/>
+			</geometry>
+		</visual>
+
+		<inertial>
+			<mass value="1e-5"/>
+			<inertia
+				ixx="1e-6" ixy="0.0" ixz="0.0"
+				iyy="1e-6" iyz="0.0"
+				izz="1e-6"/>
+		</inertial>
+	</link>
+
+	<joint name="right_ir_mnt" type="fixed">
+		<origin xyz="0.0256 0.0207 0.020" rpy="0 0 0"/>
+		<parent link="base_link"/>
+		<child link="right_ir"/>
+	</joint>
+
+	<gazebo reference="right_ir">
+		<material>Gazebo/Red</material>
+		<sensor type="ray" name="right_ir_sens">
+			<pose>0 0 0 0 0 0</pose>
+			<visualize>true</visualize>
+			<update_rate>30</update_rate>
+			<ray>
+				<scan>
+					<horizontal>
+						<samples>3</samples>
+						<resolution>1</resolution> 
+						<min_angle>-0.03</min_angle>
+						<max_angle>0.03</max_angle>
+					</horizontal>
+				</scan>
+				<range>
+					<min>0.001</min>
+					<max>${ir_max}</max>
+					<resolution>0.001</resolution>
+				</range>
+			</ray>
+			<plugin filename="libgazebo_ros_laser.so" name="gazebo_ros_laser">
+				<topicName>laser</topicName>
+				<frameName>right_ir</frameName>
+			</plugin>
+		</sensor>
+	</gazebo>
+
+	<link name="center_ir">
+		<visual>
+			<geometry>
+				<sphere radius="0.001"/>
+			</geometry>
+		</visual>
+
+		<inertial>
+			<mass value="1e-5"/>
+			<inertia
+				ixx="1e-6" ixy="0.0" ixz="0.0"
+				iyy="1e-6" iyz="0.0"
+				izz="1e-6"/>
+		</inertial>
+	</link>
+
+	<joint name="center_ir_mnt" type="fixed">
+		<origin xyz="0 0.03 0.020" rpy="0 0 1.57079632679"/>
+		<parent link="base_link"/>
+		<child link="center_ir"/>
+	</joint>
+
+	<gazebo reference="center_ir">
+		<material>Gazebo/Red</material>
+		<sensor type="ray" name="center_ir_sens">
+			<pose>0 0 0 0 0 0</pose>
+			<visualize>true</visualize>
+			<update_rate>30</update_rate>
+			<ray>
+				<scan>
+					<horizontal>
+						<samples>3</samples>
+						<resolution>1</resolution> 
+						<min_angle>-0.03</min_angle>
+						<max_angle>0.03</max_angle>
+					</horizontal>
+				</scan>
+				<range>
+					<min>0.001</min>
+					<max>${ir_max}</max>
+					<resolution>0.001</resolution>
+				</range>
+			</ray>
+			<plugin filename="libgazebo_ros_laser.so" name="gazebo_ros_laser">
+				<topicName>laser</topicName>
+				<frameName>center_ir</frameName>
+			</plugin>
+		</sensor>
 	</gazebo>
 </robot>

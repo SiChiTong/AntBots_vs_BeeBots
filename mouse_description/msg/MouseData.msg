@@ -11,3 +11,5 @@ bool aligned
 int32 x
 int32 y
 uint8 ang
+
+# TODO add sensor data as needed

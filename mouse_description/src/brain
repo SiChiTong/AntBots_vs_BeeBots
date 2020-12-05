@@ -148,17 +148,15 @@ positionLoop.state = positionLoop.States.ORIENT
 
 
 def main():
-	ns = rospy.get_namespace()
-
 	# internal stuff
 	global tfListen
 	tfListen = tf.TransformListener()
-	rospy.Subscriber(ns + 'sensor_data', SensorData, sensorCallback)
-	motor = rospy.Publisher(ns + 'cmd_vel', Twist, queue_size=10)
+	rospy.Subscriber('sensor_data', SensorData, sensorCallback)
+	motor = rospy.Publisher('cmd_vel', Twist, queue_size=10)
 
 	# wireless comms w/ mothership
-	rospy.Subscriber(ns + 'command', MouseCommand, commandCallback)
-	telem = rospy.Publisher(ns + 'telemetry', MouseData, queue_size=10)
+	rospy.Subscriber('command', MouseCommand, commandCallback)
+	telem = rospy.Publisher('telemetry', MouseData, queue_size=10)
 
 	while not sense:
 		pass # wait until sensors are booted

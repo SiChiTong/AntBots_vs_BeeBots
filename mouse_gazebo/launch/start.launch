@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <launch>
-	<param name="GRID_SIZE" value="0.18"/>
+	<param name="GRID_SIZE" value="0.1"/>
 
 	<param name="NUM_ANTS" value="3"/>
 	<param name="POS_ANT0" value="-1 -1 1"/>
@@ -13,7 +13,7 @@
 	<param name="POS_BEE2" value="1 1 3"/>
 
 	<include file="$(find gazebo_ros)/launch/empty_world.launch">
-		<arg name="paused" value="true"/>
+		<arg name="paused" value="false"/>
 		<arg name="use_sim_time" value="true"/>
 	</include>
 
