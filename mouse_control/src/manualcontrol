@@ -1,0 +1,30 @@
+#!/usr/bin/env python3
+import rospy
+import argparse
+
+from mouse_description.msg import MouseCommand
+from mouse_control.msg import UserMail
+
+def main():
+	# TODO args, multiple mice
+	NUM = rospy.get_param('/NUM_ANTS')
+	pub = rospy.Publisher('/ants/user', UserMail, queue_size=10)
+
+	while not rospy.is_shutdown():
+		c = input('ant0: ')
+		msg = UserMail()
+		msg.type = [MouseCommand.LEFT] * NUM
+		if c == 'w':
+			msg.type[0] = MouseCommand.FORWARD
+		elif c == 'a':
+			msg.type[0] = MouseCommand.LEFT
+		else: # d
+			msg.type[0] = MouseCommand.RIGHT
+		pub.publish(msg)
+
+if __name__ == '__main__':
+	rospy.init_node('manualcontrol')
+	try:
+		main()
+	except rospy.ROSInterruptException:
+		pass

@@ -4,9 +4,11 @@ import rospy
 import numpy as np
 from enum import Enum
 
+from std_msgs.msg import String
 from mouse_description.msg import MouseCommand
 from mouse_description.msg import MouseData
 from mouse_control.msg import GodMail
+from mouse_control.msg import UserMail
 
 # Comms
 def mouseCallback(data, num):
@@ -59,11 +61,17 @@ def main():
 				transition = False
 				state = States.WAITMOVE
 
-				# TODO perform computation here, all sensor data should be valid
-				# DEMO remove later
-				for i in range(NUM):
-					miceMoves[i] = MouseCommand()
-					miceMoves[i].type = MouseCommand.LEFT
+				if rospy.get_param(f'{ROLE[:-1].upper()}_USERCONTROL'):
+					usercmd = rospy.wait_for_message('user', UserMail, timeout=300.0)
+					for i in range(NUM):
+						miceMoves[i] = MouseCommand()
+						miceMoves[i].type = usercmd.type[i]
+				else:
+					# TODO perform computation here, all sensor data should be valid
+					# DEMO remove later
+					for i in range(NUM):
+						miceMoves[i] = MouseCommand()
+						miceMoves[i].type = MouseCommand.LEFT
 
 				msg = GodMail()
 				msg.type = GodMail.COMPUTED

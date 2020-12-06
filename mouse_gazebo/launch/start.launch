@@ -5,6 +5,10 @@
 	
 	<param name="WORLD_FILE" value="$(find mouse_gazebo)/launch/basic.txt"/>
 
+	<!-- Debug aids -->
+	<param name="ANTS_USERCONTROL" value="true"/>
+	<param name="BEES_USERCONTROL" value="false"/>
+
 	<include file="$(find gazebo_ros)/launch/empty_world.launch">
 		<arg name="paused" value="false"/>
 		<arg name="use_sim_time" value="true"/>

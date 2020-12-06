@@ -96,8 +96,8 @@ if __name__ == '__main__':
 	h = rospy.get_param('WORLD_HEIGHT')
 	for i in range(rospy.get_param('WORLD_WIDTH')):
 		spawn_model(f'div{i}', 'div_desc', x=i*GRID, y=(h//2 - 0.5)*GRID)
-	spawn_model('antflag', 'flag_desc', x=antFlag[0]*GRID, y=antFlag[1]*GRID)
-	spawn_model('beeflag', 'flag_desc', x=beeFlag[0]*GRID, y=beeFlag[1]*GRID)
+	spawn_model('ant_flag', 'flag_desc', x=antFlag[0]*GRID, y=antFlag[1]*GRID)
+	spawn_model('bee_flag', 'flag_desc', x=beeFlag[0]*GRID, y=beeFlag[1]*GRID)
 
 	rospy.loginfo('Spawning ants...')
 	rospy.set_param('NUM_ANTS', len(antPos))
@@ -122,6 +122,5 @@ if __name__ == '__main__':
 	rospy.loginfo('Spawning Queen Bee...')
 	start_node('mouse_control', 'mothership', 'mothership', 'bees')
 
-	# TODO wait a little bit for all nodes to start? (by using a topic)
 	rospy.wait_for_service('/gazebo/unpause_physics')
 	rospy.ServiceProxy('/gazebo/unpause_physics', Empty)()

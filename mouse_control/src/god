@@ -1,9 +1,26 @@
 #!/usr/bin/env python3
 import rospy
+import tf_conversions
 
+import numpy as np
 from enum import Enum
 
+from mouse_description.msg import MouseData
 from mouse_control.msg import GodMail
+from gazebo_msgs.srv import SetModelState
+from gazebo_msgs.srv import SetModelStateRequest
+
+# Constants
+GRID = rospy.get_param('GRID_SIZE')
+NUM_ANTS = rospy.get_param('NUM_ANTS')
+NUM_BEES = rospy.get_param('NUM_BEES')
+
+# Comms
+antData = [None] * NUM_ANTS
+beeData = [None] * NUM_BEES
+
+def dataCallback(data, args):
+	args[0][args[1]] = data
 
 def antCallback(data):
 	global antTransition
@@ -23,7 +40,97 @@ def beeCallback(data):
 	else:
 		rospy.logerr(f'Unsychronized! god {state} {data.type}')
 
+# World
+wallPos, antPos, beePos, antFlag, beeFlag = [], [], [], None, None
+
+def parseWorld(filename):
+	f = open(filename, 'r')
+	lines = f.readlines()
+	lines.reverse()
+
+	global antFlag, beeFlag
+	for y in range(len(lines)):
+		for x in range(len(lines[y])):
+			if lines[y][x] == '#':
+				wallPos.append((x, y))
+			elif lines[y][x] == 'A':
+				antPos.append((x,y))
+			elif lines[y][x] == 'B':
+				beePos.append((x,y))
+			elif lines[y][x] == 'F':
+				if y < len(lines) // 2:
+					antFlag = (x,y)
+				else:
+					beeFlag = (x,y)
+	beePos.reverse()
+
+# Helpers
+antFlagCaptured, antFlagIndex = False, 0 # index is actually into bees
+beeFlagCaptured, beeFlagIndex = False, 0 # index is actually into ants
+
+def tagLogic():
+	# check for all tags (both on same side of map)
+
+	# each tag send bot back to starting loc, if not pick alternate
+	# also send flag back if needed
+
+	pass
+
+def flagLogic():
+	global antFlagCaptured, antFlagIndex, beeFlagCaptured, beeFlagIndex
+
+	if not antFlagCaptured:
+		for i in range(NUM_BEES):
+			if beeData[i].x == antFlag[0] and beeData[i].y == antFlag[1]:
+				rospy.loginfo('Bees have captured the flag!')
+				antFlagCaptured = True
+				antFlagIndex = i
+				break
+	else:
+		if beeData[antFlagIndex].x == beeFlag[0] and beeData[antFlagIndex].y == beeFlag[1]:
+			rospy.logfatal('GAME OVER BEES WIN')
+
+	if not beeFlagCaptured:
+		for i in range(NUM_ANTS):
+			if antData[i].x == beeFlag[0] and antData[i].y == beeFlag[1]:
+				rospy.loginfo('Ants have captured the flag!')
+				beeFlagCaptured = True
+				beeFlagIndex = i
+				break
+	else:
+		if antData[beeFlagIndex].x == antFlag[0] and antData[beeFlagIndex].y == antFlag[1]:
+			rospy.logfatal('GAME OVER ANTS WIN')
+
+	# TODO Add logic to prevent camping (unless bot has flag)?
+
+def sensorLogic():
+	# for each bot for each sensor, notify the nearest object type and distance
+	# will need to subscribe to everyone
+
+	pass
+
+def gazeboMove(model, x=0, y=0, z=0, R=0, P=0, Y=0):
+	args = SetModelStateRequest()
+	args.model_state.model_name = model
+	args.model_state.reference_frame = 'world'
+	args.model_state.pose.position.x = x
+	args.model_state.pose.position.y = y
+	args.model_state.pose.position.z = z
+	q = tf_conversions.transformations.quaternion_from_euler(R, P, Y)
+	args.model_state.pose.orientation.x = q[0]
+	args.model_state.pose.orientation.y = q[1]
+	args.model_state.pose.orientation.z = q[2]
+	args.model_state.pose.orientation.w = q[3]
+	rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)(args)
+
 def main():
+	parseWorld(rospy.get_param('WORLD_FILE'))
+
+	for i in range(NUM_ANTS):
+		rospy.Subscriber(f'ants/ant{i}/telemetry', MouseData, dataCallback, (antData, i))
+	for i in range(NUM_BEES):
+		rospy.Subscriber(f'bees/bee{i}/telemetry', MouseData, dataCallback, (beeData, i))
+
 	global States, state, antTransition, beeTransition
 	States = Enum('states', 'WAITALIGN WAITCOMPUTE')
 	state = States.WAITALIGN
@@ -38,7 +145,7 @@ def main():
 	while antSocket.get_num_connections() == 0 or beeSocket.get_num_connections() == 0:
 		pass
 
-	r = rospy.Rate(10) # changing this changes the game's speed
+	r = rospy.Rate(10) # changing this can change the game's speed
 	while not rospy.is_shutdown():
 		if state == States.WAITALIGN:
 			if antTransition and beeTransition:
@@ -46,8 +153,9 @@ def main():
 				beeTransition = False
 				state = States.WAITCOMPUTE
 
-				# TODO perform flag and tag checks here
-				# TODO also do sensor logic
+				tagLogic()
+				flagLogic()
+				sensorLogic()
 
 				msg = GodMail()
 				msg.type = GodMail.COMPUTE
@@ -64,6 +172,19 @@ def main():
 				beeSocket.publish(msg)
 		else:
 			rospy.logerr('Invalid state!')
+
+		# Flag visualization
+		if antFlagCaptured:
+			x, y, a = beeData[antFlagIndex].x, beeData[antFlagIndex].y, beeData[antFlagIndex].ang
+		else:
+			x, y, a = antFlag[0], antFlag[1], 1
+		gazeboMove('ant_flag', x=x*GRID, y=y*GRID, Y=(a - 1)*np.pi/2)
+
+		if beeFlagCaptured:
+			x, y, a = antData[beeFlagIndex].x, antData[beeFlagIndex].y, antData[beeFlagIndex].ang
+		else:
+			x, y, a = beeFlag[0], beeFlag[1], 1
+		gazeboMove('bee_flag', x=x*GRID, y=y*GRID, Y=(a - 1)*np.pi/2)
 
 		r.sleep()
 
