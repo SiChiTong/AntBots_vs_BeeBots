@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<robot name="box" xmlns:xacro="http://www.ros.org/wiki/xacro">
+	<link name="base_link">
+		<visual>
+			<origin xyz="0 0 0.05" rpy="0 0 0"/>
+			<geometry>
+				<box size="0.03 0.005 0.1"/>
+			</geometry>
+		</visual>
+
+		<inertial>
+			<origin xyz="0 0 0.05" rpy="0 0 0"/>
+			<mass value="1e-5"/>
+			<inertia
+        		ixx="1e-6" ixy="0.0" ixz="0.0"
+        		iyy="1e-6" iyz="0.0"
+        		izz="1e-6"/>
+		</inertial>
+	</link>
+
+	<gazebo reference="base_link">
+		<turnGravityOff>true</turnGravityOff>
+		<mu1>1000000.0</mu1>
+		<mu2>1000000.0</mu2>
+		<material>Gazebo/RedTransparent</material>
+	</gazebo>
+</robot>

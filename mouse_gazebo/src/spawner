@@ -37,6 +37,9 @@ def parseWorld(filename):
 					beeFlag = (x,y)
 	beePos.reverse()
 
+	rospy.set_param('WORLD_HEIGHT', max([p[1] for p in wallPos]) + 1)
+	rospy.set_param('WORLD_WIDTH', max([p[0] for p in wallPos]) + 1)
+
 # launch file alternatives
 def find(pkg):
 	return rospkg.RosPack().get_path(pkg)
@@ -80,18 +83,21 @@ if __name__ == '__main__':
 	param('ant_desc', f'{find("mouse_description")}/urdf/ant.xacro')
 	param('bee_desc', f'{find("mouse_description")}/urdf/bee.xacro')
 	param('box_desc', f'{find("mouse_gazebo")}/models/box.xacro')
+	param('flag_desc', f'{find("mouse_gazebo")}/models/flag.xacro')
+	param('div_desc', f'{find("mouse_gazebo")}/models/divider.xacro')
 	rospy.wait_for_service('/gazebo/spawn_urdf_model')
 
 	rospy.loginfo(f'Parsing {WORLDFILENAME} ...')
 	parseWorld(WORLDFILENAME)
 
-	rospy.loginfo('Spawning walls...')
+	rospy.loginfo('Spawning map...')
 	for i, pos in enumerate(wallPos):
 		spawn_model(f'box{i}', 'box_desc', x=pos[0]*GRID, y=pos[1]*GRID)
-
-	rospy.loginfo('Spawning flags...') # TODO
-	
-
+	h = rospy.get_param('WORLD_HEIGHT')
+	for i in range(rospy.get_param('WORLD_WIDTH')):
+		spawn_model(f'div{i}', 'div_desc', x=i*GRID, y=(h//2 - 0.5)*GRID)
+	spawn_model('antflag', 'flag_desc', x=antFlag[0]*GRID, y=antFlag[1]*GRID)
+	spawn_model('beeflag', 'flag_desc', x=beeFlag[0]*GRID, y=beeFlag[1]*GRID)
 
 	rospy.loginfo('Spawning ants...')
 	rospy.set_param('NUM_ANTS', len(antPos))
@@ -106,6 +112,8 @@ if __name__ == '__main__':
 		spawn_model(f'bees/bee{i}', 'bee_desc', x=pos[0]*GRID, y=pos[1]*GRID, Y=np.pi)
 		start_node('mouse_description', 'sensor', 'sensor', f'bees/bee{i}')
 		start_node('mouse_description', 'brain', 'brain', f'bees/bee{i}', f'-x {pos[0]} -y {pos[1]} -a {3}')
+
+	rospy.loginfo('Spawning the Insect God...') # TODO
 
 	rospy.loginfo('Spawning Ant Queen...')
 	start_node('mouse_gazebo', 'mothership', 'mothership', 'ants')
