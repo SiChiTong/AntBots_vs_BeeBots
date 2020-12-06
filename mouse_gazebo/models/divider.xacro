@@ -1,10 +1,12 @@
 <?xml version="1.0" ?>
 <robot name="box" xmlns:xacro="http://www.ros.org/wiki/xacro">
+	<xacro:property name="grid_size" value="0.180"/>
+
 	<link name="base_link">
 		<visual>
 			<origin xyz="0 0 0.001" rpy="0 0 0"/>
 			<geometry>
-				<box size="0.1 0.004 0.002"/>
+				<box size="${grid_size} 0.004 0.002"/>
 			</geometry>
 		</visual>
 

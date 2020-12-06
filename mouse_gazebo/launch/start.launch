@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <launch>
-	<!-- Wall size doesn't change with this -->
-	<param name="GRID_SIZE" value="0.1"/>
+	<!-- Wall and divider size doesn't change with this -->
+	<param name="GRID_SIZE" value="0.18"/>
 	
 	<param name="WORLD_FILE" value="$(find mouse_gazebo)/launch/basic.txt"/>
 
