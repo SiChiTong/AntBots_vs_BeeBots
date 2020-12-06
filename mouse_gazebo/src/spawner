@@ -113,13 +113,14 @@ if __name__ == '__main__':
 		start_node('mouse_description', 'sensor', 'sensor', f'bees/bee{i}')
 		start_node('mouse_description', 'brain', 'brain', f'bees/bee{i}', f'-x {pos[0]} -y {pos[1]} -a {3}')
 
-	rospy.loginfo('Spawning the Insect God...') # TODO
+	rospy.loginfo('Spawning the Insect God...')
+	start_node('mouse_control', 'god', 'god')
 
 	rospy.loginfo('Spawning Ant Queen...')
-	start_node('mouse_gazebo', 'mothership', 'mothership', 'ants')
+	start_node('mouse_control', 'mothership', 'mothership', 'ants')
 
 	rospy.loginfo('Spawning Queen Bee...')
-	start_node('mouse_gazebo', 'mothership', 'mothership', 'bees')
+	start_node('mouse_control', 'mothership', 'mothership', 'bees')
 
 	# TODO wait a little bit for all nodes to start? (by using a topic)
 	rospy.wait_for_service('/gazebo/unpause_physics')

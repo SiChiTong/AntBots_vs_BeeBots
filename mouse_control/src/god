@@ -1,0 +1,75 @@
+#!/usr/bin/env python3
+import rospy
+
+from enum import Enum
+
+from mouse_control.msg import GodMail
+
+def antCallback(data):
+	global antTransition
+	if state == States.WAITALIGN and data.type == GodMail.ALIGNED:
+		antTransition = True
+	elif state == States.WAITCOMPUTE and data.type == GodMail.COMPUTED:
+		antTransition = True
+	else:
+		rospy.logerr(f'Unsychronized! god {state} {data.type}')
+
+def beeCallback(data):
+	global beeTransition
+	if state == States.WAITALIGN and data.type == GodMail.ALIGNED:
+		beeTransition = True
+	elif state == States.WAITCOMPUTE and data.type == GodMail.COMPUTED:
+		beeTransition = True
+	else:
+		rospy.logerr(f'Unsychronized! god {state} {data.type}')
+
+def main():
+	global States, state, antTransition, beeTransition
+	States = Enum('states', 'WAITALIGN WAITCOMPUTE')
+	state = States.WAITALIGN
+	antTransition = False
+	beeTransition = False
+
+	rospy.Subscriber('/ants/godRX', GodMail, antCallback)
+	rospy.Subscriber('/bees/godRX', GodMail, beeCallback)
+	antSocket = rospy.Publisher('/ants/godTX', GodMail, queue_size=10)
+	beeSocket = rospy.Publisher('/bees/godTX', GodMail, queue_size=10)
+
+	while antSocket.get_num_connections() == 0 or beeSocket.get_num_connections() == 0:
+		pass
+
+	r = rospy.Rate(10) # changing this changes the game's speed
+	while not rospy.is_shutdown():
+		if state == States.WAITALIGN:
+			if antTransition and beeTransition:
+				antTransition = False
+				beeTransition = False
+				state = States.WAITCOMPUTE
+
+				# TODO perform flag and tag checks here
+				# TODO also do sensor logic
+
+				msg = GodMail()
+				msg.type = GodMail.COMPUTE
+				antSocket.publish(msg)
+				beeSocket.publish(msg)
+		elif state == States.WAITCOMPUTE:
+			if antTransition and beeTransition:
+				antTransition = False
+				beeTransition = False
+				state = States.WAITALIGN
+				msg = GodMail()
+				msg.type = GodMail.MOVE
+				antSocket.publish(msg)
+				beeSocket.publish(msg)
+		else:
+			rospy.logerr('Invalid state!')
+
+		r.sleep()
+
+if __name__ == '__main__':
+	rospy.init_node('god')
+	try:
+		main()
+	except rospy.ROSInterruptException:
+		pass
