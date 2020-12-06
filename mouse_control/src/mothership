@@ -62,6 +62,7 @@ def main():
 				state = States.WAITMOVE
 
 				if rospy.get_param(f'{ROLE[:-1].upper()}_USERCONTROL'):
+					# TODO update to use callback
 					usercmd = rospy.wait_for_message('user', UserMail, timeout=300.0)
 					for i in range(NUM):
 						miceMoves[i] = MouseCommand()

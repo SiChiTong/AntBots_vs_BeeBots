@@ -6,7 +6,7 @@ from mouse_description.msg import MouseCommand
 from mouse_control.msg import UserMail
 
 def main():
-	# TODO args, multiple mice
+	# TODO args, multiple mice, brain callback instead
 	NUM = rospy.get_param('/NUM_ANTS')
 	pub = rospy.Publisher('/ants/user', UserMail, queue_size=10)
 

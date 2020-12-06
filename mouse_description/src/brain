@@ -33,6 +33,10 @@ def commandCallback(data):
 		angd = (angd + 1) % 4
 	elif data.type == MouseCommand.RIGHT:
 		angd = (angd - 1) % 4
+	elif data.type == MouseCommand.TELEPORT:
+		xd = data.x
+		yd = data.y
+		angd = data.ang
 	else:
 		rospy.logerr('Invalid command!')
 

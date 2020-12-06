@@ -5,6 +5,7 @@ import tf_conversions
 import numpy as np
 from enum import Enum
 
+from mouse_description.msg import MouseCommand
 from mouse_description.msg import MouseData
 from mouse_control.msg import GodMail
 from gazebo_msgs.srv import SetModelState
@@ -14,10 +15,14 @@ from gazebo_msgs.srv import SetModelStateRequest
 GRID = rospy.get_param('GRID_SIZE')
 NUM_ANTS = rospy.get_param('NUM_ANTS')
 NUM_BEES = rospy.get_param('NUM_BEES')
+WORLD_HEIGHT = rospy.get_param('WORLD_HEIGHT')
+WORLD_WIDTH = rospy.get_param('WORLD_WIDTH')
 
 # Comms
 antData = [None] * NUM_ANTS
 beeData = [None] * NUM_BEES
+antControl = []
+beeControl = []
 
 def dataCallback(data, args):
 	args[0][args[1]] = data
@@ -42,6 +47,7 @@ def beeCallback(data):
 
 # World
 wallPos, antPos, beePos, antFlag, beeFlag = [], [], [], None, None
+reconMap = [[' ' for j in range(WORLD_HEIGHT)] for i in range(WORLD_WIDTH)] # x,y indexing
 
 def parseWorld(filename):
 	f = open(filename, 'r')
@@ -68,13 +74,128 @@ def parseWorld(filename):
 antFlagCaptured, antFlagIndex = False, 0 # index is actually into bees
 beeFlagCaptured, beeFlagIndex = False, 0 # index is actually into ants
 
+def reconstructMap():
+	# # = wall
+	# A = ant
+	# B = ant
+	# F = flag
+	# AF = ant w/ flag
+	# BF = bee w/ flag
+
+	for x in range(WORLD_WIDTH):
+		for y in range(WORLD_HEIGHT):
+			reconMap[x][y] = ' '
+
+	for w in wallPos:
+		reconMap[w[0]][w[1]] = '#'
+	for i in range(NUM_ANTS):
+		reconMap[antData[i].x][antData[i].y] = 'A'
+	for i in range(NUM_BEES):
+		reconMap[beeData[i].x][beeData[i].y] = 'B'
+
+	if antFlagCaptured:
+		reconMap[beeData[antFlagIndex].x][beeData[antFlagIndex].y] = 'BF'
+	else:
+		reconMap[antFlag[0]][antFlag[1]] = 'F'
+
+	if beeFlagCaptured:
+		reconMap[antData[beeFlagIndex].x][antData[beeFlagIndex].y] = 'AF'
+	else:
+		reconMap[beeFlag[0]][beeFlag[1]] = 'F'
+
 def tagLogic():
-	# check for all tags (both on same side of map)
+	# Find tags
+	antTags, beeTags = set(), set()
 
-	# each tag send bot back to starting loc, if not pick alternate
-	# also send flag back if needed
+	for i in range(NUM_ANTS):
+		x, y = antData[i].x, antData[i].y
+		if y >= WORLD_HEIGHT//2: # taggable?
+			if y + 1 < WORLD_HEIGHT and 'B' in reconMap[x][y+1]: # up
+				antTags.add(i)
+			if y - 1 >= WORLD_HEIGHT//2 and 'B' in reconMap[x][y-1]: # down
+				antTags.add(i)
+			if x + 1 < WORLD_WIDTH and 'B' in reconMap[x+1][y]: # left
+				antTags.add(i)
+			if x - 1 >= 0 and 'B' in reconMap[x-1][y]: # right
+				antTags.add(i)
 
-	pass
+	for i in range(NUM_BEES):
+		x, y = beeData[i].x, beeData[i].y
+		if y < WORLD_HEIGHT//2: # taggable?
+			if y + 1 < WORLD_HEIGHT//2 and 'A' in reconMap[x][y+1]: # up
+				beeTags.add(i)
+			if y - 1 >= 0 and 'A' in reconMap[x][y-1]: # down
+				beeTags.add(i)
+			if x + 1 < WORLD_WIDTH and 'A' in reconMap[x+1][y]: # left
+				beeTags.add(i)
+			if x - 1 >= 0 and 'A' in reconMap[x-1][y]: # right
+				beeTags.add(i)
+
+	# Teleport back
+	# tags from teleportation not allowed, wait until next step
+	for i in antTags:
+		rospy.loginfo(f'ant{i} tagged!')
+
+		global beeFlagCaptured
+		if beeFlagCaptured and i == beeFlagIndex:
+			beeFlagCaptured = False
+
+		x, y = antPos[i]
+		if reconMap[x][y] != ' ':
+			for yp in range(WORLD_HEIGHT//2):
+				for xp in range(WORLD_WIDTH):
+					if reconMap[xp][yp] == ' ':
+						x, y = xp, yp
+						break
+				if reconMap[x][y] == ' ':
+					break
+
+		reconMap[antData[i].x][antData[i].y] = ' '
+		reconMap[x][y] = 'A'
+
+		cmd = MouseCommand()
+		cmd.immediate = True
+		cmd.type = MouseCommand.TELEPORT
+		cmd.x, cmd.y, cmd.ang = x, y, 1
+		antControl[i].publish(cmd)
+
+	for i in beeTags:
+		rospy.loginfo(f'bee{i} tagged!')
+		
+		global antFlagCaptured
+		if antFlagCaptured and i == antFlagIndex:
+			antFlagCaptured = False
+
+		x, y = beePos[i]
+		if reconMap[x][y] != ' ':
+			for yp in reverse(range(WORLD_HEIGHT//2, WORLD_HEIGHT)):
+				for xp in reverse(range(WORLD_WIDTH)):
+					if reconMap[xp][yp] == ' ':
+						x, y = xp, yp
+						break
+				if reconMap[x][y] == ' ':
+					break
+
+		reconMap[beeData[i].x][beeData[i].y] = ' '
+		reconMap[x][y] = 'B'
+
+		cmd = MouseCommand()
+		cmd.immediate = True
+		cmd.type = MouseCommand.TELEPORT
+		cmd.x, cmd.y, cmd.ang = x, y, 3
+		beeControl[i].publish(cmd)
+
+	# Teleportation is inaccurate for some reason
+	if antTags or beeTags:
+		rospy.sleep(0.2)
+	for i in antTags:
+		while not antData[i].aligned:
+			pass
+		rospy.loginfo(f'ant{i} recovered!')
+	for i in beeTags:
+		while not beeData[i].aligned:
+			pass
+		rospy.loginfo(f'bee{i} recovered!')
 
 def flagLogic():
 	global antFlagCaptured, antFlagIndex, beeFlagCaptured, beeFlagIndex
@@ -104,8 +225,7 @@ def flagLogic():
 	# TODO Add logic to prevent camping (unless bot has flag)?
 
 def sensorLogic():
-	# for each bot for each sensor, notify the nearest object type and distance
-	# will need to subscribe to everyone
+	# TODO for each bot for each sensor, notify the nearest object type and distance
 
 	pass
 
@@ -128,8 +248,10 @@ def main():
 
 	for i in range(NUM_ANTS):
 		rospy.Subscriber(f'ants/ant{i}/telemetry', MouseData, dataCallback, (antData, i))
+		antControl.append(rospy.Publisher(f'ants/ant{i}/command', MouseCommand, queue_size=10))
 	for i in range(NUM_BEES):
 		rospy.Subscriber(f'bees/bee{i}/telemetry', MouseData, dataCallback, (beeData, i))
+		beeControl.append(rospy.Publisher(f'bees/bee{i}/command', MouseCommand, queue_size=10))
 
 	global States, state, antTransition, beeTransition
 	States = Enum('states', 'WAITALIGN WAITCOMPUTE')
@@ -153,8 +275,11 @@ def main():
 				beeTransition = False
 				state = States.WAITCOMPUTE
 
+				reconstructMap()
 				tagLogic()
+				reconstructMap() # needed?
 				flagLogic()
+				reconstructMap()
 				sensorLogic()
 
 				msg = GodMail()
