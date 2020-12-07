@@ -8,6 +8,7 @@ from enum import Enum
 from mouse_description.msg import MouseCommand
 from mouse_description.msg import MouseData
 from mouse_control.msg import GodMail
+from mouse_control.msg import Score
 from gazebo_msgs.srv import SetModelState
 from gazebo_msgs.srv import SetModelStateRequest
 
@@ -90,6 +91,7 @@ def parseWorld(filename):
 	beePos.reverse()
 
 # Helpers
+antScore, beeScore, gameOver = 3, 3, False
 antFlagCaptured, antFlagIndex = False, 0 # index is actually into bees
 beeFlagCaptured, beeFlagIndex = False, 0 # index is actually into ants
 
@@ -227,9 +229,6 @@ def flagLogic():
 				antFlagCaptured = True
 				antFlagIndex = i
 				break
-	else:
-		if beeData[antFlagIndex].x == beeFlag[0] and beeData[antFlagIndex].y == beeFlag[1]:
-			rospy.logfatal('GAME OVER BEES WIN')
 
 	if not beeFlagCaptured:
 		for i in range(NUM_ANTS):
@@ -238,16 +237,56 @@ def flagLogic():
 				beeFlagCaptured = True
 				beeFlagIndex = i
 				break
-	else:
-		if antData[beeFlagIndex].x == antFlag[0] and antData[beeFlagIndex].y == antFlag[1]:
-			rospy.logfatal('GAME OVER ANTS WIN')
-
-	# TODO Add logic to prevent camping (unless bot has flag)?
 
 def sensorLogic():
 	# TODO for each bot for each sensor, notify the nearest object type and distance
-
 	pass
+
+def pointLogic():
+	global antScore, beeScore, gameOver
+
+	if gameOver:
+		rospy.logfatal('GAME OVER WHY ARE U STILL PLAYING?!')
+		return
+
+	for i in range(NUM_ANTS):
+		if beeFlagCaptured and beeFlagIndex == i: # exempt if u have flag
+			continue
+		elif not antFlagCaptured and antData[i].x == antFlag[0] and antData[i].y == antFlag[1]: # no camping
+			antScore -= 100
+		elif antData[i].y < WORLD_HEIGHT//2: # can't stay on your side
+			antScore -= 1
+
+	for i in range(NUM_BEES):
+		if antFlagCaptured and antFlagIndex == i: # exempt if u have flag
+			continue
+		elif not beeFlagCaptured and beeData[i].x == beeFlag[0] and beeData[i].y == beeFlag[1]: # no camping
+			beeScore -= 100
+		elif beeData[i].y >= WORLD_HEIGHT//2: # can't stay on your side
+			beeScore -= 1
+
+	if antFlagCaptured and beeData[antFlagIndex].x == beeFlag[0] and beeData[antFlagIndex].y == beeFlag[1]:
+		gameOver = True
+		beeScore += 1000
+
+	if beeFlagCaptured and antData[beeFlagIndex].x == antFlag[0] and antData[beeFlagIndex].y == antFlag[1]:
+		gameOver = True
+		antScore += 1000
+
+	rospy.loginfo(f'antScore: {antScore} beeScore: {beeScore}')
+	if gameOver:
+		if antScore > beeScore:
+			rospy.logfatal('GAME OVER ANTS WIN!!!')
+		elif antScore < beeScore:
+			rospy.logfatal('GAME OVER BEES WIN!!!')
+		else:
+			rospy.logfatal('GAME OVER IT\'S A TIE?!')
+
+	msg = Score()
+	msg.antScore = antScore
+	msg.beeScore = beeScore
+	msg.gameOver = gameOver
+	scorePub.publish(msg)
 
 def gazeboMove(model, x=0, y=0, z=0, R=0, P=0, Y=0):
 	args = SetModelStateRequest()
@@ -266,6 +305,7 @@ def gazeboMove(model, x=0, y=0, z=0, R=0, P=0, Y=0):
 def main():
 	parseWorld(rospy.get_param('WORLD_FILE'))
 
+	# connections to all mice
 	for i in range(NUM_ANTS):
 		rospy.Subscriber(f'ants/ant{i}/telemetry', MouseData, dataCallback, (antData, i))
 		antControl.append(rospy.Publisher(f'ants/ant{i}/command', MouseCommand, queue_size=10))
@@ -273,12 +313,14 @@ def main():
 		rospy.Subscriber(f'bees/bee{i}/telemetry', MouseData, dataCallback, (beeData, i))
 		beeControl.append(rospy.Publisher(f'bees/bee{i}/command', MouseCommand, queue_size=10))
 
+	# state machine setup
 	global States, state, antTransition, beeTransition
 	States = Enum('states', 'WAITALIGN WAITCOMPUTE')
 	state = States.WAITALIGN
 	antTransition = False
 	beeTransition = False
 
+	# comms with motherships
 	rospy.Subscriber('/ants/godRX', GodMail, antCallback)
 	rospy.Subscriber('/bees/godRX', GodMail, beeCallback)
 	antSocket = rospy.Publisher('/ants/godTX', GodMail, queue_size=10)
@@ -286,6 +328,10 @@ def main():
 
 	while antSocket.get_num_connections() == 0 or beeSocket.get_num_connections() == 0:
 		pass
+
+	# score
+	global scorePub
+	scorePub = rospy.Publisher('/score', Score, queue_size=10)
 
 	# Level 1: Total Omniscience
 	global omnipub
@@ -305,6 +351,7 @@ def main():
 				flagLogic()
 				reconstructMap()
 				sensorLogic()
+				pointLogic()
 
 				# Level 1: Total Omniscience
 				leakMap()

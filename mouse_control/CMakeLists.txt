@@ -53,6 +53,7 @@ add_message_files(
   UserMail.msg
   GodMail.msg
   Omniscience.msg
+  Score.msg
 )
 
 ## Generate services in the 'srv' folder

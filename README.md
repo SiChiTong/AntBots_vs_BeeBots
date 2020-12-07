@@ -84,6 +84,17 @@ You can also clone this repo into your own workspace!
 
 	# Equivalent topics/nodes found under /bees
 
+	# Each mothership has access to the following for algorithm dev
+	NUM # number of mice under its control
+	miceData # location and orientation of each mouse
+	score # current game score
+	reconMap # Level 1 Omniscient: contains positions and orientation of everything
+
+	# Each mouse brain has access to the following
+	xd, yd, angd # its own location and orientation
+	sense # laser sensor identifying distance and type (if in range)
+
+
 ## Build Your Own World
 
 Check out the .txt files.

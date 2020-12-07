@@ -9,6 +9,7 @@ from mouse_description.msg import MouseCommand
 from mouse_description.msg import MouseData
 from mouse_control.msg import GodMail
 from mouse_control.msg import UserMail
+from mouse_control.msg import Score
 
 # Level 1: Total Omniscience
 from mouse_control.msg import Omniscience
@@ -42,6 +43,10 @@ def userCallback(data):
 	usercmd = data
 	uservalid = True
 
+def scoreCallback(data):
+	global score
+	score = data
+
 # Helpers
 def allAligned():
 	return all([d.aligned for d in miceData])
@@ -50,6 +55,7 @@ def dist(x1, y1, x2, y2):
 	return np.sqrt((y1-y2)**2 + (x1-x2)**2)
 
 def main():
+	# connections with its mice
 	global miceData, miceControl
 	miceData = [None] * NUM
 	miceControl = []
@@ -60,22 +66,30 @@ def main():
 	while not all(miceData):
 		pass # wait for mice to bootup and send telemetry
 
+	# state machine setup
 	global States, state, transition
 	States = Enum('states', 'WAITCOMP WAITMOVE WAITALIGN')
 	state = States.WAITALIGN
 	transition = False
 
+	# comms with god node
 	rospy.Subscriber(f'{ROLE}godTX', GodMail, godCallback)
 	godSocket = rospy.Publisher(f'{ROLE}godRX', GodMail, queue_size=10)
 
 	while godSocket.get_num_connections() == 0:
 		pass
 
+	global score
+	score = Score()
+	rospy.Subscriber('/score', Score, scoreCallback)
+
+	# user input
 	global usercmd, uservalid, USER
 	USER = rospy.get_param(f'{ROLE[:-1].upper()}_USERCONTROL')
 	rospy.Subscriber('user', UserMail, userCallback)
 	uservalid = False
 
+	# moves to do
 	miceMoves = [None] * NUM
 
 	# Level 1: Total Omniscience
@@ -83,6 +97,9 @@ def main():
 
 	r = rospy.Rate(30)
 	while not rospy.is_shutdown():
+		if score.gameOver:
+			return
+
 		if state == States.WAITCOMP:
 			if transition:
 				transition = False
