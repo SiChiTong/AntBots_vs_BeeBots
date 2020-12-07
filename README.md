@@ -1,4 +1,4 @@
-# Ant-Bots vs. Some Bee-Bots - EECS 106A Fall 2020 Final Project
+# Ant-Bots vs. Some Bee-Bots - EECS 106A Fall 2020 Final Project 
 
 A simulation of two teams of robots competing in a CTF style game.
 
