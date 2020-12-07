@@ -81,6 +81,7 @@ def reconstructMap():
 	# F = flag
 	# AF = ant w/ flag
 	# BF = bee w/ flag
+	# number after indicates orientation
 
 	for x in range(WORLD_WIDTH):
 		for y in range(WORLD_HEIGHT):
@@ -89,17 +90,17 @@ def reconstructMap():
 	for w in wallPos:
 		reconMap[w[0]][w[1]] = '#'
 	for i in range(NUM_ANTS):
-		reconMap[antData[i].x][antData[i].y] = 'A'
+		reconMap[antData[i].x][antData[i].y] = f'A{antData[i].ang}'
 	for i in range(NUM_BEES):
-		reconMap[beeData[i].x][beeData[i].y] = 'B'
+		reconMap[beeData[i].x][beeData[i].y] = f'B{beeData[i].ang}'
 
 	if antFlagCaptured:
-		reconMap[beeData[antFlagIndex].x][beeData[antFlagIndex].y] = 'BF'
+		reconMap[beeData[antFlagIndex].x][beeData[antFlagIndex].y] = f'BF{beeData[antFlagIndex].ang}'
 	else:
 		reconMap[antFlag[0]][antFlag[1]] = 'F'
 
 	if beeFlagCaptured:
-		reconMap[antData[beeFlagIndex].x][antData[beeFlagIndex].y] = 'AF'
+		reconMap[antData[beeFlagIndex].x][antData[beeFlagIndex].y] = f'AF{antData[beeFlagIndex].ang}'
 	else:
 		reconMap[beeFlag[0]][beeFlag[1]] = 'F'
 
@@ -110,25 +111,25 @@ def tagLogic():
 	for i in range(NUM_ANTS):
 		x, y = antData[i].x, antData[i].y
 		if y >= WORLD_HEIGHT//2: # taggable?
-			if y + 1 < WORLD_HEIGHT and 'B' in reconMap[x][y+1]: # up
+			if y + 1 < WORLD_HEIGHT and 'B' in reconMap[x][y+1] and '1' not in reconMap[x][y+1]: # up
 				antTags.add(i)
-			if y - 1 >= WORLD_HEIGHT//2 and 'B' in reconMap[x][y-1]: # down
+			if y - 1 >= WORLD_HEIGHT//2 and 'B' in reconMap[x][y-1] and '3' not in reconMap[x][y-1]: # down
 				antTags.add(i)
-			if x + 1 < WORLD_WIDTH and 'B' in reconMap[x+1][y]: # left
+			if x + 1 < WORLD_WIDTH and 'B' in reconMap[x+1][y] and '0' not in reconMap[x+1][y]: # left
 				antTags.add(i)
-			if x - 1 >= 0 and 'B' in reconMap[x-1][y]: # right
+			if x - 1 >= 0 and 'B' in reconMap[x-1][y] and '2' not in reconMap[x-1][y]: # right
 				antTags.add(i)
 
 	for i in range(NUM_BEES):
 		x, y = beeData[i].x, beeData[i].y
 		if y < WORLD_HEIGHT//2: # taggable?
-			if y + 1 < WORLD_HEIGHT//2 and 'A' in reconMap[x][y+1]: # up
+			if y + 1 < WORLD_HEIGHT//2 and 'A' in reconMap[x][y+1] and '1' not in reconMap[x][y+1]: # up
 				beeTags.add(i)
-			if y - 1 >= 0 and 'A' in reconMap[x][y-1]: # down
+			if y - 1 >= 0 and 'A' in reconMap[x][y-1] and '3' not in reconMap[x][y-1]: # down
 				beeTags.add(i)
-			if x + 1 < WORLD_WIDTH and 'A' in reconMap[x+1][y]: # left
+			if x + 1 < WORLD_WIDTH and 'A' in reconMap[x+1][y] and '0' not in reconMap[x+1][y]: # left
 				beeTags.add(i)
-			if x - 1 >= 0 and 'A' in reconMap[x-1][y]: # right
+			if x - 1 >= 0 and 'A' in reconMap[x-1][y] and '2' not in reconMap[x-1][y]: # right
 				beeTags.add(i)
 
 	# Teleport back
@@ -151,7 +152,7 @@ def tagLogic():
 					break
 
 		reconMap[antData[i].x][antData[i].y] = ' '
-		reconMap[x][y] = 'A'
+		reconMap[x][y] = 'A1'
 
 		cmd = MouseCommand()
 		cmd.immediate = True
@@ -177,7 +178,7 @@ def tagLogic():
 					break
 
 		reconMap[beeData[i].x][beeData[i].y] = ' '
-		reconMap[x][y] = 'B'
+		reconMap[x][y] = 'B3'
 
 		cmd = MouseCommand()
 		cmd.immediate = True
