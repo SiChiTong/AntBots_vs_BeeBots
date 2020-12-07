@@ -70,6 +70,11 @@ You can also clone this repo into your own workspace!
 	/ants/ant*/command # forward, turn left, or turn right
 	/ants/ant*/telemetry # discretized position/orientation + if reached
 
+	# Wireless comms w/ god node
+	/ants/godTX
+	/ants/godRX
+	/omniscience # level 1
+
 	# "Threads" running per mouse
 	/ants/ant*/sensor # aggregated laser sensor data
 	/ants/ant*/brain # control loop to reach discretized position
