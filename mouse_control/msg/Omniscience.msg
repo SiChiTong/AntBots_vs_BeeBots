@@ -6,11 +6,12 @@
 # A = ant
 # B = ant
 # F = flag
-# FA = ant w/ enemy flag
-# CA = ant camped on its flag
-# FB = bee w/ enemy flag
-# CB = bee camped on its flag
+# AF = ant w/ enemy flag
+# AC = ant camped on its flag
+# BF = bee w/ enemy flag
+# BC = bee camped on its flag
 # number before indicates orientation
+# (ACF and BFC are additional win states)
 
 string[] type
 int32[] x
