@@ -11,6 +11,20 @@ from mouse_control.msg import GodMail
 from gazebo_msgs.srv import SetModelState
 from gazebo_msgs.srv import SetModelStateRequest
 
+# Level 1: Total Omniscience
+from mouse_control.msg import Omniscience
+
+def leakMap():
+	msg = Omniscience()
+	for x in range(WORLD_WIDTH):
+		for y in range(WORLD_HEIGHT):
+			if reconMap[x][y] == ' ':
+				continue
+			msg.type.append(reconMap[x][y])
+			msg.x.append(x)
+			msg.y.append(y)
+	omnipub.publish(msg)
+
 # Constants
 GRID = rospy.get_param('GRID_SIZE')
 NUM_ANTS = rospy.get_param('NUM_ANTS')
@@ -268,6 +282,10 @@ def main():
 	while antSocket.get_num_connections() == 0 or beeSocket.get_num_connections() == 0:
 		pass
 
+	# Level 1: Total Omniscience
+	global omnipub
+	omnipub = rospy.Publisher('/omniscience', Omniscience, queue_size=10)
+
 	r = rospy.Rate(10) # changing this can change the game's speed
 	while not rospy.is_shutdown():
 		if state == States.WAITALIGN:
@@ -282,6 +300,9 @@ def main():
 				flagLogic()
 				reconstructMap()
 				sensorLogic()
+
+				# Level 1: Total Omniscience
+				leakMap()
 
 				msg = GodMail()
 				msg.type = GodMail.COMPUTE

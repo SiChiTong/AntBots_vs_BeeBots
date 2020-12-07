@@ -10,6 +10,20 @@ from mouse_description.msg import MouseData
 from mouse_control.msg import GodMail
 from mouse_control.msg import UserMail
 
+# Level 1: Total Omniscience
+from mouse_control.msg import Omniscience
+
+WORLD_HEIGHT = rospy.get_param('/WORLD_HEIGHT')
+WORLD_WIDTH = rospy.get_param('/WORLD_WIDTH')
+reconMap = [[' ' for j in range(WORLD_HEIGHT)] for i in range(WORLD_WIDTH)]
+
+def omniCallback(data):
+	for x in range(WORLD_WIDTH):
+		for y in range(WORLD_HEIGHT):
+			reconMap[x][y] = ' '
+	for t, x, y in zip(data.type, data.x, data.y):
+		reconMap[x][y] = t
+
 # Comms
 def mouseCallback(data, num):
 	miceData[num] = data
@@ -63,6 +77,9 @@ def main():
 	uservalid = False
 
 	miceMoves = [None] * NUM
+
+	# Level 1: Total Omniscience
+	rospy.Subscriber('/omniscience', Omniscience, omniCallback)
 
 	r = rospy.Rate(30)
 	while not rospy.is_shutdown():
