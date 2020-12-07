@@ -10,6 +10,7 @@ uint8 TELEPORT=4
 
 # Data
 bool immediate
+bool force
 uint8 type
 int32 x
 int32 y
