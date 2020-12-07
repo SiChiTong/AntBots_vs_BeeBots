@@ -23,6 +23,11 @@ def godCallback(data):
 	else:
 		rospy.logerr(f'Unsychronized! {ROLE} {state} {data.type}')
 
+def userCallback(data):
+	global usercmd, uservalid
+	usercmd = data
+	uservalid = True
+
 # Helpers
 def allAligned():
 	return all([d.aligned for d in miceData])
@@ -52,6 +57,11 @@ def main():
 	while godSocket.get_num_connections() == 0:
 		pass
 
+	global usercmd, uservalid, USER
+	USER = rospy.get_param(f'{ROLE[:-1].upper()}_USERCONTROL')
+	rospy.Subscriber('user', UserMail, userCallback)
+	uservalid = False
+
 	miceMoves = [None] * NUM
 
 	r = rospy.Rate(30)
@@ -61,12 +71,13 @@ def main():
 				transition = False
 				state = States.WAITMOVE
 
-				if rospy.get_param(f'{ROLE[:-1].upper()}_USERCONTROL'):
-					# TODO update to use callback
-					usercmd = rospy.wait_for_message('user', UserMail, timeout=300.0)
+				if USER:
+					while not uservalid:
+						pass
 					for i in range(NUM):
 						miceMoves[i] = MouseCommand()
 						miceMoves[i].type = usercmd.type[i]
+					uservalid = False
 				else:
 					# TODO perform computation here, all sensor data should be valid
 					# DEMO remove later

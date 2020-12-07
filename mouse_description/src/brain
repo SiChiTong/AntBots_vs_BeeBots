@@ -15,7 +15,6 @@ from gazebo_msgs.srv import SetModelState
 from gazebo_msgs.srv import SetModelStateRequest
 
 # Constants
-
 GRID = rospy.get_param('/GRID_SIZE')
 
 # DAQ
@@ -33,6 +32,8 @@ def commandCallback(data):
 		angd = (angd + 1) % 4
 	elif data.type == MouseCommand.RIGHT:
 		angd = (angd - 1) % 4
+	elif data.type == MouseCommand.STOP:
+		pass
 	elif data.type == MouseCommand.TELEPORT:
 		xd = data.x
 		yd = data.y

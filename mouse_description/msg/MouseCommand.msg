@@ -4,7 +4,8 @@
 uint8 FORWARD=0
 uint8 LEFT=1
 uint8 RIGHT=2
-uint8 TELEPORT=3
+uint8 STOP=3
+uint8 TELEPORT=4
 # TODO add more as needed
 
 # Data

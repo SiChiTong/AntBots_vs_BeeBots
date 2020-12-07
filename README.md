@@ -54,7 +54,7 @@ You can also clone this repo into your own workspace!
 	rosnode kill -a
 
 	# Tip in case processes don't die properly
-	pkill python3
+	pkill -f python3 -9
 
 	# Tip for viewing debugging messages on /rosout
 	rosconsole echo -l debug
