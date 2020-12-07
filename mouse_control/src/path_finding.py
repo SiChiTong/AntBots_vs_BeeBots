@@ -1,5 +1,5 @@
 # determines path to take based on A* search algorithm
-def astar(sx, sy, ex, ey):
+def astar(sx, sy, ex, ey, reconMap):
     found_path = False
 
     # F = G + H
@@ -56,7 +56,7 @@ def astar(sx, sy, ex, ey):
             minx, miny = min_tuple[0], min_tuple[1]
             min_id = int(cantor_pairing(minx, miny))
 
-            if not isValid(succ):
+            if not isValid(succ, reconMap):
                 continue
           
             if succx == ex and succy == ey:
@@ -95,10 +95,8 @@ def cantor_pairing(x, y):
     return 0.5 * (x + y) * (x + y + 1) + y
 
 # determines whether (x, y) tuple is legal: not OOB and not a wall
-def isValid(tuple):
+def isValid(tuple, reconMap):
     x, y = tuple[0], tuple[1]
-    if x < 0 or x > 9:
-        return False
-    if y < 0 or y > 9:
+    if reconMap[x][y] == "#":
         return False
     return True
