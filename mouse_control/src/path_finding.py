@@ -1,21 +1,23 @@
 # determines path to take based on A* search algorithm
-def astar(sx, sy, ex, ey, reconMap):
+def astar(sx, sy, ex, ey, reconMap, height, width):
     found_path = False
 
     # F = G + H
-    g_list = [None for i in range(1000)]
-    h_list = [None for i in range(1000)]
-    f_list = [None for i in range(1000)]
-
+    #g_list = [None for i in range(1000)]
+    #h_list = [None for i in range(1000)]
+    #f_list = [None for i in range(1000)]
+    g_array = [[None for j in range(height)] for i in range(width)]
+    h_array = [[None for j in range(height)] for i in range(width)]
+    f_array = [[None for j in range(height)] for i in range(width)]
+    
     open_list = []
     close_list = []
-    parent_list = [None for i in range(1000)]
+    #parent_list = [None for i in range(1000)]
+    parent_array = [[None for j in range(height)] for i in range(width)]
     
-    start_id = int(cantor_pairing(sx, sy))
-    f_list[start_id] = 0
-    g_list[start_id] = 0
-    h_list[start_id] = 0
-    
+    f_array[sx][sy] = 0
+    g_array[sx][sy] = 0
+    h_array[sx][sy] = 0
     
     open_list.append((sx, sy))
     
@@ -28,13 +30,11 @@ def astar(sx, sy, ex, ey, reconMap):
             if (o == None):
                 continue
             ox, oy = o[0], o[1]
-            o_id = int(cantor_pairing(ox, oy))
 
-            if min_f > f_list[o_id]:
-                min_f = f_list[o_id]
+            if min_f > f_array[ox][oy]:
+                min_f = f_array[ox][oy]
                 min_tuple = o
         
-        m = int(cantor_pairing(min_tuple[0], min_tuple[1]))
         # pop min f tuple from open list
         open_list.remove(min_tuple)
         
@@ -62,21 +62,20 @@ def astar(sx, sy, ex, ey, reconMap):
             if succx == ex and succy == ey:
                 found_path = True
                 print("DONE!")
-                return parent_list
+                return parent_array
 
             elif (succx, succy) not in close_list:
-
-                g_value = g_list[min_id] + 1
+                g_value = g_array[minx][miny] + 1
                 h_value = manhattan(succx, succy, ex, ey)
                 f_value = g_value + h_value
 
-                if (succ not in open_list or f_value < f_list[s_id]):
-                    g_list[s_id] = g_value
-                    h_list[s_id] = h_value
-                    f_list[s_id] = f_value
+                if (succ not in open_list or f_value < f_array[succx][succy]):
+                    g_array[succx][succy] = g_value
+                    h_array[succx][succy] = h_value
+                    f_array[succx][succy] = f_value
                     
                     open_list.append(succ)
-                    parent_list[s_id] = o
+                    parent_array[succx][succy] = o
 
     if (found_path == False):
         print("error: no path found")
@@ -97,6 +96,6 @@ def cantor_pairing(x, y):
 # determines whether (x, y) tuple is legal: not OOB and not a wall
 def isValid(tuple, reconMap):
     x, y = tuple[0], tuple[1]
-    if reconMap[x][y] == "#":
+    if reconMap[x][y] == '#':
         return False
     return True
