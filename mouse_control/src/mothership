@@ -10,7 +10,8 @@ from mouse_description.msg import MouseData
 from mouse_control.msg import GodMail
 from mouse_control.msg import UserMail
 from mouse_control.msg import Score
-from mouse_control import path_finding
+
+# from mouse_control import path_finding
 
 # Level 1: Total Omniscience
 from mouse_control.msg import Omniscience
@@ -99,7 +100,8 @@ def main():
 	r = rospy.Rate(30)
 	while not rospy.is_shutdown():
 		if score.gameOver:
-			return
+			r.sleep()
+			continue
 
 		if state == States.WAITCOMP:
 			if transition:
@@ -116,55 +118,58 @@ def main():
 				else:
 					# TODO perform computation here, all sensor data should be valid
 					# DEMO remove later
+					for i in range(NUM):
+						miceMoves[i] = MouseCommand()
+						miceMoves[i].type = MouseCommand.LEFT
 
-					flagx, flagy = -1, -1
-					for x in range(WORLD_HEIGHT):
-						for y in range(WORLD_WIDTH):
+					# flagx, flagy = -1, -1
+					# for x in range(WORLD_HEIGHT):
+					# 	for y in range(WORLD_WIDTH):
 			
-							if reconMap[x][y] == "F":
-								flagx, flagy = x, y
+					# 		if reconMap[x][y] == "F":
+					# 			flagx, flagy = x, y
 					
-					if flagx == -1 and flagy == -1:
-						print("error: no flag detected")
+					# if flagx == -1 and flagy == -1:
+					# 	print("error: no flag detected")
 					
 	
-					for i in range(NUM):
-						current_mouse = mouseData[i]
-						mx, my = current_mouse.x, current_mouse.y
-						mang = current_mouse.ang
+					# for i in range(NUM):
+					# 	current_mouse = mouseData[i]
+					# 	mx, my = current_mouse.x, current_mouse.y
+					# 	mang = current_mouse.ang
 
-						path_list = []
-						path_list = path_finding.astar(mx, my, flagx, flagy, reconMap)
+					# 	path_list = []
+					# 	path_list = path_finding.astar(mx, my, flagx, flagy, reconMap)
 
-						flag_cantor = int(path_finding.cantor_pairing(flagx, flagy))
+					# 	flag_cantor = int(path_finding.cantor_pairing(flagx, flagy))
 
-						nextx, nexty = -1, -1
-						while True:
-							parent = path_list[flag_cantor]
-							if (parent[0] == mx and parent[1] == my):
-								nextx, nexty = last_square[0], last_square[1]
-								break
-							flag_cantor = int(path_finding.cantor_pairing(parent[0], parent[1]))
-							last_square = parent
+					# 	nextx, nexty = -1, -1
+					# 	while True:
+					# 		parent = path_list[flag_cantor]
+					# 		if (parent[0] == mx and parent[1] == my):
+					# 			nextx, nexty = last_square[0], last_square[1]
+					# 			break
+					# 		flag_cantor = int(path_finding.cantor_pairing(parent[0], parent[1]))
+					# 		last_square = parent
 
-						if nextx == -1 or nexty == -1:
-							print("error: bad path")
+					# 	if nextx == -1 or nexty == -1:
+					# 		print("error: bad path")
 						
-						miceMoves[i] = MouseCommand()
+					# 	miceMoves[i] = MouseCommand()
 
-						## NOT CORRECTLY TURNING / MOVING YET
-						if (nextx - mx == 1):
-							# go right
-							miceMoves[i].type = MouseCommand.RIGHT
-						elif (nextx - mx == -1):
-							# go left
-							miceMoves[i].type = MouseCommand.LEFT
-						elif (nexty - my == 1):
-							#go up
-							miceMoves[i].type = MouseCommand.FORWARD
-						else:
-							#go backwards
-							miceMoves[i].type = MouseCommand.STOP
+					# 	## NOT CORRECTLY TURNING / MOVING YET
+					# 	if (nextx - mx == 1):
+					# 		# go right
+					# 		miceMoves[i].type = MouseCommand.RIGHT
+					# 	elif (nextx - mx == -1):
+					# 		# go left
+					# 		miceMoves[i].type = MouseCommand.LEFT
+					# 	elif (nexty - my == 1):
+					# 		#go up
+					# 		miceMoves[i].type = MouseCommand.FORWARD
+					# 	else:
+					# 		#go backwards
+					# 		miceMoves[i].type = MouseCommand.STOP
 
 				msg = GodMail()
 				msg.type = GodMail.COMPUTED

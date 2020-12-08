@@ -7,8 +7,10 @@ from enum import Enum
 
 from mouse_description.msg import MouseCommand
 from mouse_description.msg import MouseData
+from mouse_description.msg import SensorData
 from mouse_control.msg import GodMail
 from mouse_control.msg import Score
+from mouse_control.msg import Vision
 from gazebo_msgs.srv import SetModelState
 from gazebo_msgs.srv import SetModelStateRequest
 
@@ -26,6 +28,7 @@ def leakMap():
 			msg.y.append(y)
 	omnipub.publish(msg)
 
+	# Debug
 	# for y in reversed(range(WORLD_HEIGHT)):
 	# 	for x in range(WORLD_WIDTH):
 	# 		print(reconMap[x][y], end="\t")
@@ -43,6 +46,8 @@ antData = [None] * NUM_ANTS
 beeData = [None] * NUM_BEES
 antControl = []
 beeControl = []
+antVision = []
+beeVision = []
 
 def dataCallback(data, args):
 	args[0][args[1]] = data
@@ -239,8 +244,38 @@ def flagLogic():
 				break
 
 def sensorLogic():
-	# TODO for each bot for each sensor, notify the nearest object type and distance
-	pass
+	dxys = [(1,0),(0,1),(-1,0),(0,-1)] # direction 0-3
+
+	def helper(num, data, vision, flagcap, flagind):
+		for i in range(num):
+			msg = Vision()
+			for dx, dy in dxys:
+				# find hit
+				x, y, d = data[i].x + dx, data[i].y + dy, 1
+				while reconMap[x][y] == '': # map must be surrounded by walls
+					x, y, d = x+dx, y+dy, d+1
+				# find type
+				if '#' in reconMap[x][y]:
+					msg.type.append(SensorData.WALL)
+				elif 'A' in reconMap[x][y]:
+					msg.type.append(SensorData.ANT)
+				elif 'B' in reconMap[x][y]:
+					msg.type.append(SensorData.BEE)
+				else:
+					msg.type.append(SensorData.AIR)
+				# check flag
+				if 'F' in reconMap[x][y] or 'C' in reconMap[x][y]:
+					msg.flag.append(True)
+				else:
+					msg.flag.append(False)
+				# send it
+				msg.dist.append(d)
+			if flagcap and i == flagind:
+				msg.hasFlag = True
+			vision[i].publish(msg)
+
+	helper(NUM_ANTS, antData, antVision, antFlagCaptured, antFlagIndex)
+	helper(NUM_BEES, beeData, beeVision, beeFlagCaptured, beeFlagIndex)
 
 def pointLogic():
 	global antScore, beeScore, gameOver
@@ -309,9 +344,11 @@ def main():
 	for i in range(NUM_ANTS):
 		rospy.Subscriber(f'ants/ant{i}/telemetry', MouseData, dataCallback, (antData, i))
 		antControl.append(rospy.Publisher(f'ants/ant{i}/command', MouseCommand, queue_size=10))
+		antVision.append(rospy.Publisher(f'ants/ant{i}/vision', Vision, queue_size=10))
 	for i in range(NUM_BEES):
 		rospy.Subscriber(f'bees/bee{i}/telemetry', MouseData, dataCallback, (beeData, i))
 		beeControl.append(rospy.Publisher(f'bees/bee{i}/command', MouseCommand, queue_size=10))
+		beeVision.append(rospy.Publisher(f'bees/bee{i}/vision', Vision, queue_size=10))
 
 	# state machine setup
 	global States, state, antTransition, beeTransition

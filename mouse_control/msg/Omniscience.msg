@@ -4,7 +4,7 @@
 
 # # = wall
 # A = ant
-# B = ant
+# B = bee
 # F = flag
 # AF = ant w/ enemy flag
 # AC = ant camped on its flag
