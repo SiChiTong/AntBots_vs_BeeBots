@@ -12,7 +12,6 @@ Change MAX_RANGE in mouse_description/src/sensor to match the Gazebo sim.
 	roslaunch mouse_gazebo start.launch
 
 	# to end (from a diff terminal)
-	rosnode kill -a
 	pkill -f python3 -9
 
 ## Setup Instructions

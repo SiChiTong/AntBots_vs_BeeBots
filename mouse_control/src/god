@@ -347,6 +347,8 @@ def main():
 	# Level 1: Total Omniscience
 	global omnipub
 	omnipub = rospy.Publisher('/omniscience', Omniscience, queue_size=10)
+	while omnipub.get_num_connections() != 2:
+		pass
 
 	# Wait for alignment first
 	while not (antTransition and beeTransition):
