@@ -92,7 +92,7 @@ You can also clone this repo into your own workspace!
 
 	# Each mouse brain has access to the following
 	xd, yd, angd # its own location and orientation
-	sense # laser sensor identifying distance and type (if in range)
+	sense # laser sensor identifying distance and type (if in range) + if has flag
 
 
 ## Build Your Own World

@@ -24,7 +24,7 @@ sense = None
 def commandCallback(data):
 	global xd, yd, angd, imm
 	if data.type == MouseCommand.FORWARD:
-		if sense.centerDist != 1 or data.force:
+		if sense.centerDist != 1 or sense.centerType == SensorData.AIR or data.force:
 			xd += 1 if angd == MouseData.EAST else 0
 			yd += 1 if angd == MouseData.NORTH else 0
 			xd -= 1 if angd == MouseData.WEST else 0

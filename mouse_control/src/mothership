@@ -99,7 +99,8 @@ def main():
 	r = rospy.Rate(30)
 	while not rospy.is_shutdown():
 		if score.gameOver:
-			return
+			r.sleep()
+			continue
 
 		if state == States.WAITCOMP:
 			if transition:
@@ -116,6 +117,9 @@ def main():
 				else:
 					# TODO perform computation here, all sensor data should be valid
 					# DEMO remove later
+					for i in range(NUM):
+						miceMoves[i] = MouseCommand()
+						miceMoves[i].type = MouseCommand.LEFT
 
 					flagx, flagy = -1, -1
 					for x in range(WORLD_WIDTH):
@@ -126,8 +130,8 @@ def main():
 								print("FLAG HERE:")
 								print(flagx, flagy)
 					
-					if flagx == -1 and flagy == -1:
-						print("error: no flag detected")
+					# if flagx == -1 and flagy == -1:
+					# 	print("error: no flag detected")
 					
 	
 					for i in range(NUM):
