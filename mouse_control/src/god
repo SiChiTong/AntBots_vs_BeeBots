@@ -274,8 +274,8 @@ def sensorLogic():
 				msg.hasFlag = True
 			vision[i].publish(msg)
 
-	helper(NUM_ANTS, antData, antVision, antFlagCaptured, antFlagIndex)
-	helper(NUM_BEES, beeData, beeVision, beeFlagCaptured, beeFlagIndex)
+	helper(NUM_ANTS, antData, antVision, beeFlagCaptured, beeFlagIndex)
+	helper(NUM_BEES, beeData, beeVision, antFlagCaptured, antFlagIndex)
 
 def pointLogic():
 	global antScore, beeScore, gameOver
