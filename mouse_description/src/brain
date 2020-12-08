@@ -1,21 +1,12 @@
 #!/usr/bin/env python3
 import rospy
-import tf
-import tf_conversions
 
 import argparse
 from enum import Enum
-import numpy as np
 
-from geometry_msgs.msg import Twist
 from mouse_description.msg import MouseCommand
 from mouse_description.msg import MouseData
 from mouse_description.msg import SensorData
-from gazebo_msgs.srv import SetModelState
-from gazebo_msgs.srv import SetModelStateRequest
-
-# Constants
-GRID = rospy.get_param('/GRID_SIZE')
 
 # DAQ
 sense = None
@@ -44,22 +35,6 @@ def commandCallback(data):
 	else:
 		rospy.logerr('Invalid command!')
 
-	if data.immediate:
-		args = SetModelStateRequest()
-		x, y, a = discreteToCont(xd, yd, angd)
-		args.model_state.model_name = rospy.get_namespace()[1:-1]
-		args.model_state.reference_frame = 'world'
-		args.model_state.pose.position.x = x
-		args.model_state.pose.position.y = y
-		args.model_state.pose.position.z = 0.0005
-		q = tf_conversions.transformations.quaternion_from_euler(0, 0, a - np.pi/2)
-		args.model_state.pose.orientation.x = q[0]
-		args.model_state.pose.orientation.y = q[1]
-		args.model_state.pose.orientation.z = q[2]
-		args.model_state.pose.orientation.w = q[3]
-		rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)(args)
-
-# bumper and color sensor data
 def sensorCallback(data):
 	global sense
 	sense = data
@@ -69,98 +44,9 @@ xd = 0
 yd = 0
 angd = MouseData.EAST
 
-def getPos():
-	try:
-		T, R = tfListen.lookupTransform('map', rospy.get_namespace()[1:-1], rospy.Time(0))
-		yaw = modpi(tf_conversions.transformations.euler_from_quaternion(R)[2] + np.pi/2)
-		return T[0], T[1], yaw # x, y, angle
-	except:
-		rospy.logerr('No transform!')
-		return 0, 0, 0
-
-def contToDiscrete(x, y, ang):
-	return round(x/GRID), round(y/GRID), round(ang / (np.pi/2)) % 4
-
-def discreteToCont(x, y, ang):
-	return x*GRID, y*GRID, modpi(ang * np.pi/2)
-
-# Math helpers
-def modpi(ang):
-	while (ang > np.pi):
-		ang -= 2 * np.pi
-	while (ang < -np.pi):
-		ang += 2 * np.pi
-	return ang
-
-def dist(x1, y1, x2, y2, a1=0, a2=0):
-	return np.sqrt((y1-y2)**2 + (x1-x2)**2 + modpi(a1-a2)**2)
-
-def getMouseNum():
-	return int(rospy.get_namespace()[-2])
-
-# Control Loops
-
-# Position based control
-# Uses state machine that performs actions while in a state, not on transition, for cleaner code
-# extremely strange instability above ~1.5m/s, happens in real life too
-# just drive slow and it's ok
-def positionLoop(xd, yd, angd=0, MAXLIN=0.5, MAXANG=8):
-	xa, ya, anga = getPos()
-	ex = xd - xa
-	ey = yd - ya
-
-	elin = np.sqrt(ex*ex + ey*ey) # linear distance error
-	eango = modpi(np.arctan2(ey, ex) - anga) # orientation error
-	eangd = modpi(angd - anga) # desired final angle error
-
-	cmd = Twist()
-	# Perform transitions
-	if positionLoop.state == positionLoop.States.ORIENT:
-		if abs(eango) < 0.01:
-			positionLoop.state = positionLoop.States.BEELINE
-	elif positionLoop.state == positionLoop.States.BEELINE:
-		if elin < 0.003:
-			positionLoop.state = positionLoop.States.ALIGN
-		elif abs(eango) > 0.5:
-			positionLoop.state = positionLoop.States.ORIENT
-	elif positionLoop.state == positionLoop.States.ALIGN:
-		if elin > 0.02:
-			positionLoop.state = positionLoop.States.ORIENT
-	else:
-		rospy.logerr('Invalid state!')
-		return None
-
-	# State actions
-	if positionLoop.state == positionLoop.States.ORIENT:
-		ulin = 0
-		uang = 10 * eango
-	elif positionLoop.state == positionLoop.States.BEELINE:
-		ulin = 6 * elin
-		uang = 12 * eango
-	elif positionLoop.state == positionLoop.States.ALIGN:
-		ulin = 0
-		uang = 8 * eangd
-	else:
-		rospy.logerr('Invalid state!')
-		return None
-
-	# send it off
-	cmd = Twist()
-	cmd.linear.x = np.clip(ulin, 0, MAXLIN)
-	cmd.angular.z = np.clip(uang, -MAXANG, MAXANG)
-
-	return cmd
-
-positionLoop.States = Enum('posStates', 'ORIENT BEELINE ALIGN')
-positionLoop.state = positionLoop.States.ORIENT
-
-
 def main():
 	# internal stuff
-	global tfListen
-	tfListen = tf.TransformListener()
 	rospy.Subscriber('sensor_data', SensorData, sensorCallback)
-	motor = rospy.Publisher('cmd_vel', Twist, queue_size=10)
 
 	# wireless comms w/ mothership
 	rospy.Subscriber('command', MouseCommand, commandCallback)
@@ -171,13 +57,9 @@ def main():
 
 	r = rospy.Rate(30)
 	while not rospy.is_shutdown():
-		motor.publish(positionLoop(*discreteToCont(xd, yd, angd)))
-
 		msg = MouseData()
 		msg.x, msg.y, msg.ang = xd, yd, angd
-		x, y, a = discreteToCont(xd, yd, angd)
-		pos = getPos()
-		msg.aligned = dist(x, y, pos[0], pos[1], a, pos[2]) < 0.1
+		msg.aligned = True
 		telem.publish(msg)
 
 		r.sleep()

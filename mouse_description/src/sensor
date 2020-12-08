@@ -1,18 +1,12 @@
 #!/usr/bin/env python3
 import rospy
 
-import math
-import numpy as np
-
 from mouse_description.msg import MouseData
 from mouse_description.msg import SensorData
 from mouse_control.msg import Vision
 from sensor_msgs.msg import LaserScan
 
 # Aggregates sensor data
-
-# Constants
-GRID = rospy.get_param('/GRID_SIZE')
 
 # Processing
 def angCallback(data):
@@ -24,39 +18,31 @@ def visionCallback(data):
 	vision = data
 	outData.hasFlag = vision.hasFlag
 
-def laserCallback(data):
-	pts = [i for i in data.ranges if i != float('inf')]
-	if pts:
-		dist = math.ceil(sum(pts) / len(pts) / GRID)
-	else:
-		dist = 0
+def laserCallback():
+	MAX_RANGE = 3 
 
-	# TODO lower freq
-	MAX_RANGE = math.ceil(data.range_max / GRID)
+	# left ir
+	outData.leftDist = 0
+	idx = (angd + 1) % 4
+	if vision and vision.dist[idx] <= MAX_RANGE:
+		outData.leftType = vision.type[idx]
+		outData.leftFlag = vision.flag[idx]
+		outData.leftDist = vision.dist[idx]
+	# right ir
+	outData.rightDist = 0
+	idx = (angd - 1) % 4
+	if vision and vision.dist[idx] <= MAX_RANGE:
+		outData.rightType = vision.type[idx]
+		outData.rightFlag = vision.flag[idx]
+		outData.rightDist = vision.dist[idx]
 
-	if 'left_ir' in data.header.frame_id:
-		outData.leftDist = dist
-		idx = (angd + 1) % 4
-		if vision and vision.dist[idx] <= MAX_RANGE:
-			outData.leftType = vision.type[idx]
-			outData.leftFlag = vision.flag[idx]
-			outData.leftDist = vision.dist[idx]
-	elif 'right_ir' in data.header.frame_id:
-		outData.rightDist = dist
-		idx = (angd - 1) % 4
-		if vision and vision.dist[idx] <= MAX_RANGE:
-			outData.rightType = vision.type[idx]
-			outData.rightFlag = vision.flag[idx]
-			outData.rightDist = vision.dist[idx]
-	elif 'center_ir' in data.header.frame_id:
-		outData.centerDist = dist
-		idx = angd
-		if vision and vision.dist[idx] <= MAX_RANGE:
-			outData.centerType = vision.type[idx]
-			outData.centerFlag = vision.flag[idx]
-			outData.centerDist = vision.dist[idx]
-	else:
-		rospy.logerr('Invalid frame!')
+	# center ir
+	outData.centerDist = 0
+	idx = angd
+	if vision and vision.dist[idx] <= MAX_RANGE:
+		outData.centerType = vision.type[idx]
+		outData.centerFlag = vision.flag[idx]
+		outData.centerDist = vision.dist[idx]
 
 angd = 0
 vision = None
@@ -65,11 +51,11 @@ outData = SensorData()
 def main():
 	rospy.Subscriber('telemetry', MouseData, angCallback)
 	rospy.Subscriber('vision', Vision, visionCallback)
-	rospy.Subscriber('laser', LaserScan, laserCallback)
 	pub = rospy.Publisher('sensor_data', SensorData, queue_size=10)
 
 	r = rospy.Rate(30)
 	while not rospy.is_shutdown():
+		laserCallback()
 		pub.publish(outData)
 		r.sleep()
 

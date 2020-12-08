@@ -2,6 +2,19 @@
 
 A simulation of two teams of robots competing in a CTF style game.
 
+## Text-only Considerations
+
+DO NOT MERGE!!!
+
+Change MAX_RANGE in mouse_description/src/sensor to match the Gazebo sim.
+
+	# to start
+	roslaunch mouse_gazebo start.launch
+
+	# to end (from a diff terminal)
+	rosnode kill -a
+	pkill -f python3 -9
+
 ## Setup Instructions
 
 Developed on Ubuntu 20.04.1 LTS, but other distributions should work too.
@@ -23,10 +36,6 @@ For some reason rosdep is not installed by default.
 	sudo rosdep init
 	rosdep update
 
-### Install Gazebo
-
-Already installed with ros-noetic-desktop-full!
-
 ### Create Workspace and Install Packages
 
 You can also clone this repo into your own workspace!
@@ -45,10 +54,6 @@ You can also clone this repo into your own workspace!
 
 	# Start everything
 	roslaunch mouse_gazebo start.launch
-
-	# Restart w/o killing Gazebo (decently reliable)
-	rosrun mouse_gazebo killer
-	rosrun mouse_gazebo spawner
 
 	# Tip to kill stuff super quick
 	rosnode kill -a
