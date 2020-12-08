@@ -89,7 +89,7 @@ You can also clone this repo into your own workspace!
 
 	# Each mothership has access to the following for algorithm dev
 	NUM # number of mice under its control
-	miceData # location and orientation of each mouse
+	miceData # location, orientation, and known cells from each mouse
 	score # current game score
 	reconMap # Level 1 Omniscient: contains positions and orientation of everything
 

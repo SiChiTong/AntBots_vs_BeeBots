@@ -44,6 +44,37 @@ xd = 0
 yd = 0
 angd = MouseData.EAST
 
+def computeKnownCells(msg):
+	dxys = [(1,0),(0,1),(-1,0),(0,-1)] # direction 0-3
+
+	def traceCells(ang, dis, typ, fla):
+		dx, dy = dxys[ang]
+		xs, ys = xd + dx, yd + dy
+		if dis == 0: # out of range so all blocks in range are air
+			for i in range(0, sense.maxRange):
+				msg.types.append(SensorData.AIR)
+				msg.flags.append(False)
+				msg.xs.append(xs)
+				msg.ys.append(ys)
+				xs += dx
+				ys += dy
+		else:
+			for i in range(0, dis - 1):
+				msg.types.append(SensorData.AIR)
+				msg.flags.append(False)
+				msg.xs.append(xs)
+				msg.ys.append(ys)
+				xs += dx
+				ys += dy
+			msg.types.append(typ)
+			msg.flags.append(fla)
+			msg.xs.append(xs)
+			msg.ys.append(ys)
+
+	traceCells((angd+1)%4, sense.leftDist, sense.leftType, sense.leftFlag)
+	traceCells(angd, sense.centerDist, sense.centerType, sense.centerFlag)
+	traceCells((angd-1)%4, sense.rightDist, sense.rightType, sense.rightFlag)
+
 def main():
 	# internal stuff
 	rospy.Subscriber('sensor_data', SensorData, sensorCallback)
@@ -60,6 +91,8 @@ def main():
 		msg = MouseData()
 		msg.x, msg.y, msg.ang = xd, yd, angd
 		msg.aligned = True
+		msg.hasFlag = sense.hasFlag
+		computeKnownCells(msg)
 		telem.publish(msg)
 
 		r.sleep()

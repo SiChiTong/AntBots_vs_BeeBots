@@ -12,4 +12,12 @@ int32 x
 int32 y
 uint8 ang
 
+# Processed Sensor Data
+uint32[] types # see SensorData.msg for more info
+bool[] flags
+int32[] xs
+int32[] ys
+
+bool hasFlag
+
 # TODO add sensor data as needed

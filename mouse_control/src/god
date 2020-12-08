@@ -91,7 +91,7 @@ def parseWorld(filename):
 	beePos.reverse()
 
 # Helpers
-antScore, beeScore, gameOver = 3, 3, False
+antScore, beeScore, gameOver = NUM_ANTS, NUM_BEES, False
 antFlagCaptured, antFlagIndex = False, 0 # index is actually into bees
 beeFlagCaptured, beeFlagIndex = False, 0 # index is actually into ants
 

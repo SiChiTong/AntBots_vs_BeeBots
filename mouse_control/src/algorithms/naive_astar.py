@@ -60,8 +60,8 @@ def computeMoves(miceMoves, score, miceData, reconMap):
 			mx, my = current_mouse.x, current_mouse.y
 			mang = current_mouse.ang
 			
-			close_list = path_finding.astar(mx, my, myFlag[0], myFlag[1], reconMap, WORLD_HEIGHT, WORLD_WIDTH)
-			
+			close_list = path_finding.astar(mx, my, enemyFlag[0], enemyFlag[1], reconMap, WORLD_HEIGHT, WORLD_WIDTH)
+						
 			nextx, nexty = 0, 0
 
 			for close_node in close_list:

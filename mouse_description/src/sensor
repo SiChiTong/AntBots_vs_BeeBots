@@ -19,7 +19,8 @@ def visionCallback(data):
 	outData.hasFlag = vision.hasFlag
 
 def laserCallback():
-	MAX_RANGE = 3 
+	MAX_RANGE = 2
+	outData.maxRange = MAX_RANGE
 
 	# left ir
 	outData.leftDist = 0

@@ -5,6 +5,8 @@ uint8 WALL=1
 uint8 ANT=2
 uint8 BEE=3
 
+int32 maxRange
+
 uint8 leftType # what am I seeing?
 bool leftFlag # is there also a flag?
 int32 leftDist # distance in number of squares (0 if too far/invalid)
