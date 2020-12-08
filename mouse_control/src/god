@@ -59,7 +59,7 @@ def antCallback(data):
 	elif state == States.WAITCOMPUTE and data.type == GodMail.COMPUTED:
 		antTransition = True
 	else:
-		rospy.logerr(f'Unsychronized! god {state} {data.type}')
+		rospy.logerr(f'Unsychronized! god ant {state} {data.type}')
 
 def beeCallback(data):
 	global beeTransition
@@ -68,7 +68,7 @@ def beeCallback(data):
 	elif state == States.WAITCOMPUTE and data.type == GodMail.COMPUTED:
 		beeTransition = True
 	else:
-		rospy.logerr(f'Unsychronized! god {state} {data.type}')
+		rospy.logerr(f'Unsychronized! god bee {state} {data.type}')
 
 # World
 wallPos, antPos, beePos, antFlag, beeFlag = [], [], [], None, None
@@ -356,6 +356,7 @@ def main():
 	state = States.WAITALIGN
 	antTransition = False
 	beeTransition = False
+	isAntsTurn = True
 
 	# comms with motherships
 	rospy.Subscriber('/ants/godRX', GodMail, antCallback)
@@ -373,12 +374,18 @@ def main():
 	# Level 1: Total Omniscience
 	global omnipub
 	omnipub = rospy.Publisher('/omniscience', Omniscience, queue_size=10)
+	while omnipub.get_num_connections() != 2:
+		pass
+
+	# Wait for alignment first
+	while not (antTransition and beeTransition):
+		pass
+	antTransition = False
 
 	r = rospy.Rate(10) # changing this can change the game's speed
 	while not rospy.is_shutdown():
 		if state == States.WAITALIGN:
-			if antTransition and beeTransition:
-				antTransition = False
+			if isAntsTurn and beeTransition: # wait for bees to finish turn
 				beeTransition = False
 				state = States.WAITCOMPUTE
 
@@ -390,8 +397,7 @@ def main():
 				sensorLogic()
 				pointLogic()
 
-				# Level 1: Total Omniscience
-				leakMap()
+				leakMap() # Level 1: Total Omniscience
 
 				# technically everything being updated isn't guaranteed (tiny chance)
 				# bc messages might not be processed in time
@@ -401,15 +407,40 @@ def main():
 				msg = GodMail()
 				msg.type = GodMail.COMPUTE
 				antSocket.publish(msg)
+			elif not isAntsTurn and antTransition: # wait for ants to finish turn
+				antTransition = False
+				state = States.WAITCOMPUTE
+
+				# no tag logic do when bees finish
+				reconstructMap()
+				flagLogic()
+				reconstructMap()
+				sensorLogic()
+				# no point logic do when bees finish
+
+				leakMap() # Level 1: Total Omniscience
+
+				rospy.sleep(0.1) # synchronization
+
+				msg = GodMail()
+				msg.type = GodMail.COMPUTE
 				beeSocket.publish(msg)
 		elif state == States.WAITCOMPUTE:
-			if antTransition and beeTransition:
+			if isAntsTurn and antTransition: # wait for ants to finish thinking
 				antTransition = False
-				beeTransition = False
 				state = States.WAITALIGN
+				isAntsTurn = False
+
 				msg = GodMail()
 				msg.type = GodMail.MOVE
 				antSocket.publish(msg)
+			if not isAntsTurn and beeTransition: # wait for bees to finish thinking
+				beeTransition = False
+				state = States.WAITALIGN
+				isAntsTurn = True
+
+				msg = GodMail()
+				msg.type = GodMail.MOVE
 				beeSocket.publish(msg)
 		else:
 			rospy.logerr('Invalid state!')

@@ -35,13 +35,13 @@ def computeFlags(rmap):
 
 # standard interface functions
 def initAlg(isant, numMice):
-    global ISANT, NUM
-    ISANT = isant
-    NUM = numMice
+	global ISANT, NUM
+	ISANT = isant
+	NUM = numMice
 
 def computeMoves(miceMoves, score, miceData, reconMap):
 	# miceMoves - modify this with the moves u wanna do
-    # score - current score, see mouse_control/msg/Score.msg
+	# score - current score, see mouse_control/msg/Score.msg
 	# miceData - telemetry data from each mouse, see mouse_description/msg/MouseData.msg
 	# TODO add sensor data from each mouse to do level 2 knowledge
 
@@ -49,9 +49,9 @@ def computeMoves(miceMoves, score, miceData, reconMap):
 	# reconMap - xy-indexed, see mouse_control/msg/Omniscience.msg (also can print out in god node leakMap)
 
 	# First call should not have any flags captured, so can grab flag locations from there
-    # keep in mind these are base locations, need to re-search if flag is stolen
-    if not (myFlag and enemyFlag):
-        computeFlags(reconMap)
+	# keep in mind these are base locations, need to re-search if flag is stolen
+	if not (myFlag and enemyFlag):
+		computeFlags(reconMap)
 
 	# Compute some moves
     if ISANT:
@@ -61,74 +61,74 @@ def computeMoves(miceMoves, score, miceData, reconMap):
             mang = current_mouse.ang
             
             close_list = path_finding.astar(mx, my, enemyFlag[0], enemyFlag[1], reconMap, WORLD_HEIGHT, WORLD_WIDTH)
+						
+			nextx, nexty = 0, 0
+
+			for close_node in close_list:
+				if close_node[4] == mx and close_node[5] == my:
+					nextx = close_node[0] - mx
+					nexty = close_node[1] - my
+
+			if (nextx == 1):
+				# go EASTboulders_large
+				if mang == 0:
+					miceMoves[i].type = MouseCommand.FORWARD
+				else:
+					miceMoves[i].type = MouseCommand.LEFT
+			elif (nextx == -1):
+				# go WEST
+				if mang == 2:
+					miceMoves[i].type = MouseCommand.FORWARD
+				else:
+					miceMoves[i].type = MouseCommand.LEFT
+			elif (nexty == 1):
+				#go NORTH
+				if mang == 1:
+					miceMoves[i].type = MouseCommand.FORWARD
+				else:
+					miceMoves[i].type = MouseCommand.LEFT
+			elif (nexty == -1):
+				#go SOUTH
+				if mang == 3:
+					miceMoves[i].type = MouseCommand.FORWARD
+				else:
+					miceMoves[i].type = MouseCommand.LEFT
+	else:
+		for i in range(NUM):
+			current_mouse = miceData[i]
+			mx, my = current_mouse.x, current_mouse.y
+			mang = current_mouse.ang
 			
-            nextx, nexty = 0, 0
-
-            for close_node in close_list:
-                if close_node[4] == mx and close_node[5] == my:
-                    nextx = close_node[0] - mx
-                    nexty = close_node[1] - my
-
-            if (nextx == 1):
-                # go EASTboulders_large
-                if mang == 0:
-                    miceMoves[i].type = MouseCommand.FORWARD
-                else:
-                    miceMoves[i].type = MouseCommand.LEFT
-            elif (nextx == -1):
-                # go WEST
-                if mang == 2:
-                    miceMoves[i].type = MouseCommand.FORWARD
-                else:
-                    miceMoves[i].type = MouseCommand.LEFT
-            elif (nexty == 1):
-                #go NORTH
-                if mang == 1:
-                    miceMoves[i].type = MouseCommand.FORWARD
-                else:
-                    miceMoves[i].type = MouseCommand.LEFT
-            elif (nexty == -1):
-                #go SOUTH
-                if mang == 3:
-                    miceMoves[i].type = MouseCommand.FORWARD
-                else:
-                    miceMoves[i].type = MouseCommand.LEFT
-    else:
-        for i in range(NUM):
-            current_mouse = miceData[i]
-            mx, my = current_mouse.x, current_mouse.y
-            mang = current_mouse.ang
-            
-            close_list = path_finding.astar(mx, my, enemyFlag[0], enemyFlag[1], reconMap, WORLD_HEIGHT, WORLD_WIDTH)
+			close_list = path_finding.astar(mx, my, enemyFlag[0], enemyFlag[1], reconMap, WORLD_HEIGHT, WORLD_WIDTH)
 			
-            nextx, nexty = 0, 0
+			nextx, nexty = 0, 0
 
-            for close_node in close_list:
-                if close_node[4] == mx and close_node[5] == my:
-                    nextx = close_node[0] - mx
-                    nexty = close_node[1] - my
+			for close_node in close_list:
+				if close_node[4] == mx and close_node[5] == my:
+					nextx = close_node[0] - mx
+					nexty = close_node[1] - my
 
-            if (nextx == 1):
-                # go EAST
-                if mang == 0:
-                    miceMoves[i].type = MouseCommand.FORWARD
-                else:
-                    miceMoves[i].type = MouseCommand.LEFT
-            elif (nextx == -1):
-                # go WEST
-                if mang == 2:
-                    miceMoves[i].type = MouseCommand.FORWARD
-                else:
-                    miceMoves[i].type = MouseCommand.LEFT
-            elif (nexty == 1):
-                #go NORTH
-                if mang == 1:
-                    miceMoves[i].type = MouseCommand.FORWARD
-                else:
-                    miceMoves[i].type = MouseCommand.LEFT
-            elif (nexty == -1):
-                #go SOUTH
-                if mang == 3:
-                    miceMoves[i].type = MouseCommand.FORWARD
-                else:
-                    miceMoves[i].type = MouseCommand.LEFT
+			if (nextx == 1):
+				# go EAST
+				if mang == 0:
+					miceMoves[i].type = MouseCommand.FORWARD
+				else:
+					miceMoves[i].type = MouseCommand.LEFT
+			elif (nextx == -1):
+				# go WEST
+				if mang == 2:
+					miceMoves[i].type = MouseCommand.FORWARD
+				else:
+					miceMoves[i].type = MouseCommand.LEFT
+			elif (nexty == 1):
+				#go NORTH
+				if mang == 1:
+					miceMoves[i].type = MouseCommand.FORWARD
+				else:
+					miceMoves[i].type = MouseCommand.LEFT
+			elif (nexty == -1):
+				#go SOUTH
+				if mang == 3:
+					miceMoves[i].type = MouseCommand.FORWARD
+				else:
+					miceMoves[i].type = MouseCommand.LEFT
