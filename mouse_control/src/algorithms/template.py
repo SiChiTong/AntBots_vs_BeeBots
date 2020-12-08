@@ -53,6 +53,7 @@ def computeMoves(miceMoves, score, miceData, reconMap):
 		computeFlags(reconMap)
 
 	# Compute some moves
+	# keep in mind ants go first, then bees, but tag and point logic doesn't apply until bees are done
 	if ISANT:
 		for i in range(NUM):
 			miceMoves[i].type = MouseCommand.LEFT # also has FORWARD, RIGHT, and STOP

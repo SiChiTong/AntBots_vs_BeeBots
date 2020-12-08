@@ -148,9 +148,9 @@ if __name__ == '__main__':
 
 	# Choose algorithm here!
 	if ISANT:
-		from algorithms.template import initAlg, computeMoves
+		from algorithms.naive_astar import initAlg, computeMoves
 	else:
-		from algorithms.template import initAlg, computeMoves
+		from algorithms.naive_astar import initAlg, computeMoves
 
 	try:
 		main()

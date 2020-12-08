@@ -3,37 +3,32 @@ def astar(sx, sy, ex, ey, reconMap, height, width):
     found_path = False
 
     # F = G + H
-    #g_list = [None for i in range(1000)]
-    #h_list = [None for i in range(1000)]
-    #f_list = [None for i in range(1000)]
     g_array = [[None for j in range(height)] for i in range(width)]
     h_array = [[None for j in range(height)] for i in range(width)]
     f_array = [[None for j in range(height)] for i in range(width)]
     
     open_list = []
     close_list = []
-    #parent_list = [None for i in range(1000)]
     parent_array = [[None for j in range(height)] for i in range(width)]
     
     f_array[sx][sy] = 0
     g_array[sx][sy] = 0
     h_array[sx][sy] = 0
     
-    open_list.append((sx, sy))
+    open_list.append((sx, sy, 0, 0, -1, -1))
     
     while open_list:
         # temp variables for minimum F and minimum tuple
         min_f = float('inf')
-        min_tuple = (-1, -1)
+        # MIN_TUPLE = (x, y, F, G, parentx, parenty)
+        min_tuple = (-1, -1, -1, -1, -1, -1)
 
-        for o in open_list:
-            if (o == None):
-                continue
-            ox, oy = o[0], o[1]
+        for open_node in open_list:
+            openx, openy, openf = open_node[0], open_node[1], open_node[2]
 
-            if min_f > f_array[ox][oy]:
-                min_f = f_array[ox][oy]
-                min_tuple = o
+            if min_f > openf:
+                min_f = openf
+                min_tuple = open_node
         
         # pop min f tuple from open list
         open_list.remove(min_tuple)
@@ -41,47 +36,46 @@ def astar(sx, sy, ex, ey, reconMap, height, width):
         # add min f tuple to close list
         close_list.append(min_tuple)
         
+        if min_tuple[0] == ex and min_tuple[1] == ey:
+            return close_list
+            #found goal, backtrack for path
+
         mx, my = min_tuple[0], min_tuple[1]
         # generate the 4 successor tuples
-        succ1 = (mx - 1, my)
-        succ2 = (mx + 1, my)
-        succ3 = (mx, my - 1)
-        succ4 = (mx, my + 1)
+        succ1 = (mx - 1, my, -1, -1, mx, my)
+        succ2 = (mx + 1, my, -1, -1, mx, my)
+        succ3 = (mx, my - 1, -1, -1, mx, my)
+        succ4 = (mx, my + 1, -1, -1, mx, my)
 
         succ_list = [succ1, succ2, succ3, succ4]
 
         for succ in succ_list:
             succx, succy = succ[0], succ[1]
-            s_id = int(cantor_pairing(succx, succy))
-            minx, miny = min_tuple[0], min_tuple[1]
-            min_id = int(cantor_pairing(minx, miny))
 
             if not isValid(succ, reconMap):
                 continue
           
-            if succx == ex and succy == ey:
-                found_path = True
-                print("DONE!")
-                return parent_array
+            for closed_child in close_list:
+                if succ[0] == closed_child[0] and succ[1] == closed_child[1]:
+                    continue
+ 
+           
+            g_value = min_tuple[3] + 1
+            h_value = manhattan(succx, succy, ex, ey)
+            f_value = g_value + h_value
+            
+            child = (succx, succy, f_value, g_value, mx, my)
 
-            elif (succx, succy) not in close_list:
-                g_value = g_array[minx][miny] + 1
-                h_value = manhattan(succx, succy, ex, ey)
-                f_value = g_value + h_value
+            for open_check in open_list:
+                if child[0] == open_check[0] and child[1] == open_check[1] and child[3] > open_check[3]:
+                    continue
 
-                if (succ not in open_list or f_value < f_array[succx][succy]):
-                    g_array[succx][succy] = g_value
-                    h_array[succx][succy] = h_value
-                    f_array[succx][succy] = f_value
-                    
-                    open_list.append(succ)
-                    parent_array[succx][succy] = o
+            open_list.append(child)
 
     if (found_path == False):
-        print("error: no path found")
+        print("ERROR: NO PATH FOUND IN A*!")
     
-    print("done!")
-    return parent_list
+    return parent_array
 
 # calculates and returns the manhattan distance between
 # a start x, y and end x, y. 
@@ -98,66 +92,8 @@ def isValid(tuple, reconMap):
     x, y = tuple[0], tuple[1]
     if reconMap[x][y] == '#':
         return False
+    if reconMap[x][y] == 'A':
+        return False
+    if reconMap[x][y] == 'B':
+        return False
     return True
-
-# SAVED CODE FROM MOTHERSHIP
-
-"""
-                    flagx, flagy = -1, -1
-                    for x in range(WORLD_WIDTH):
-                        for y in range(WORLD_HEIGHT):
-                            if reconMap[x][y] == 'F':
-                                
-                                flagx, flagy = x, y
-                                print("FLAG HERE:")
-                                print(flagx, flagy)
-                    
-                    # if flagx == -1 and flagy == -1:
-                    #   print("error: no flag detected")
-                    
-    
-                    for i in range(NUM):
-                        current_mouse = miceData[i]
-                        mx, my = current_mouse.x, current_mouse.y
-                        mang = current_mouse.ang
-
-                        path_array = path_finding.astar(mx, my, flagx, flagy, reconMap, WORLD_HEIGHT, WORLD_WIDTH)
-                        print(path_array)
-
-                        nextx, nexty = 0, 0
-                        
-                        if (path_array[mx + 1][my] == (mx, my)):
-                            nextx = 1
-                        elif (path_array[mx - 1][my] == (mx, my)):
-                            nextx = -1
-                        elif (path_array[mx][my + 1] == (mx, my)):
-                            nexty = 1
-                        elif (path_array[mx][my - 1] == (mx, my)):
-                            nexty = -1
-                        else:
-                            print("error: bad path")
-                        
-                        miceMoves[i] = MouseCommand()
-
-                        print("NEXT")
-                        print(nextx)
-                        print(nexty)
-                        ## ONLY TURNING RIGHT FOR TESTING, NOT CORRECTLY TURNING / MOVING YET
-                        if (nextx == 1):
-                            # go right
-                            print("HIT RIGHT")
-                            #if (mang[num])
-                            miceMoves[i].type = MouseCommand.LEFT
-                            print("MANG")
-                            print(mang)
-                        elif (nextx == -1):
-                            # go left
-                            print("HIT LEFT")
-                            miceMoves[i].type = MouseCommand.LEFT
-                        elif (nexty == 1):
-                            #go up
-                            miceMoves[i].type = MouseCommand.LEFT
-                        else:
-                            #go backwards
-                            miceMoves[i].type = MouseCommand.LEFT
-"""
