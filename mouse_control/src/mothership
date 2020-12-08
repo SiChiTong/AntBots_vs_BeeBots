@@ -117,9 +117,9 @@ def main():
 				else:
 					# TODO perform computation here, all sensor data should be valid
 					# DEMO remove later
-					for i in range(NUM):
-						miceMoves[i] = MouseCommand()
-						miceMoves[i].type = MouseCommand.LEFT
+					#for i in range(NUM):
+					#	miceMoves[i] = MouseCommand()
+					#	miceMoves[i].type = MouseCommand.LEFT
 
 					flagx, flagy = -1, -1
 					for x in range(WORLD_WIDTH):
@@ -164,7 +164,10 @@ def main():
 						if (nextx == 1):
 							# go right
 							print("HIT RIGHT")
+							#if (mang[num])
 							miceMoves[i].type = MouseCommand.LEFT
+							print("MANG")
+							print(mang)
 						elif (nextx == -1):
 							# go left
 							print("HIT LEFT")
