@@ -92,74 +92,8 @@ def isValid(tuple, reconMap):
     x, y = tuple[0], tuple[1]
     if reconMap[x][y] == '#':
         return False
-<<<<<<< HEAD:mouse_control/src/path_finding.py
     if reconMap[x][y] == 'A':
         return False
     if reconMap[x][y] == 'B':
         return False
     return True
-=======
-    return True
-
-# SAVED CODE FROM MOTHERSHIP
-
-"""
-                    flagx, flagy = -1, -1
-                    for x in range(WORLD_WIDTH):
-                        for y in range(WORLD_HEIGHT):
-                            if reconMap[x][y] == 'F':
-                                
-                                flagx, flagy = x, y
-                                print("FLAG HERE:")
-                                print(flagx, flagy)
-                    
-                    # if flagx == -1 and flagy == -1:
-                    #   print("error: no flag detected")
-                    
-    
-                    for i in range(NUM):
-                        current_mouse = miceData[i]
-                        mx, my = current_mouse.x, current_mouse.y
-                        mang = current_mouse.ang
-
-                        path_array = path_finding.astar(mx, my, flagx, flagy, reconMap, WORLD_HEIGHT, WORLD_WIDTH)
-                        print(path_array)
-
-                        nextx, nexty = 0, 0
-                        
-                        if (path_array[mx + 1][my] == (mx, my)):
-                            nextx = 1
-                        elif (path_array[mx - 1][my] == (mx, my)):
-                            nextx = -1
-                        elif (path_array[mx][my + 1] == (mx, my)):
-                            nexty = 1
-                        elif (path_array[mx][my - 1] == (mx, my)):
-                            nexty = -1
-                        else:
-                            print("error: bad path")
-                        
-                        miceMoves[i] = MouseCommand()
-
-                        print("NEXT")
-                        print(nextx)
-                        print(nexty)
-                        ## ONLY TURNING RIGHT FOR TESTING, NOT CORRECTLY TURNING / MOVING YET
-                        if (nextx == 1):
-                            # go right
-                            print("HIT RIGHT")
-                            #if (mang[num])
-                            miceMoves[i].type = MouseCommand.LEFT
-                            print("MANG")
-                            print(mang)
-                        elif (nextx == -1):
-                            # go left
-                            print("HIT LEFT")
-                            miceMoves[i].type = MouseCommand.LEFT
-                        elif (nexty == 1):
-                            #go up
-                            miceMoves[i].type = MouseCommand.LEFT
-                        else:
-                            #go backwards
-                            miceMoves[i].type = MouseCommand.LEFT
-"""
->>>>>>> 75dcd3af12bbb159039ec58bfb2f1fc0cb42e646:mouse_control/src/algorithms/path_finding.py

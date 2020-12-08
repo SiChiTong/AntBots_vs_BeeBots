@@ -117,75 +117,7 @@ def main():
 						miceMoves[i].type = usercmd.type[i]
 					uservalid = False
 				else:
-<<<<<<< HEAD
-					# TODO perform computation here, all sensor data should be valid
-			
-					flagx, flagy = -1, -1
-					for x in range(WORLD_WIDTH):
-						for y in range(WORLD_HEIGHT):
-							if reconMap[x][y] == 'F':
-								
-								flagx, flagy = x, y
-								print("FLAG HERE:")
-								print(flagx, flagy)
-					
-					for i in range(NUM):
-						current_mouse = miceData[i]
-						mx, my = current_mouse.x, current_mouse.y
-						mang = current_mouse.ang
-
-						close_list = path_finding.astar(mx, my, flagx, flagy, reconMap, WORLD_HEIGHT, WORLD_WIDTH)
-						print(close_list)
-
-						nextx, nexty = 0, 0
-						# (x, y, F, G, parentx, parenty)
-						
-						for c in close_list:
-							if c[4] == mx and c[5] == my:
-								nextx = c[0] - mx
-								nexty = c[1] - my
-						#if (parent_array[mx + 1][my] == (mx, my)):
-						#	nextx = 1
-						#elif (parent_array[mx - 1][my] == (mx, my)):
-						#	nextx = -1
-						#elif (parent_array[mx][my + 1] == (mx, my)):
-						#	nexty = 1
-						#elif (parent_array[mx][my - 1] == (mx, my)):
-						#	nexty = -1
-						#else:
-						#	print("ERROR: NO PATH FOUND TO FLAG!")
-						
-						miceMoves[i] = MouseCommand()
-
-						if nextx == 1:
-							print("GOING EAST")
-							if mang == 0:
-								miceMoves[i].type = MouseCommand.FORWARD
-							else:
-								miceMoves[i].type = MouseCommand.LEFT
-						elif nextx == -1:
-							print("GOING WEST")
-							if mang == 2:
-								miceMoves[i].type = MouseCommand.FORWARD
-							else:
-								miceMoves[i].type = MouseCommand.LEFT
-						elif nexty == 1:
-							print("GOING NORTH")
-							if mang == 1:
-								miceMoves[i].type = MouseCommand.FORWARD
-							else:
-								miceMoves[i].type = MouseCommand.LEFT
-						elif nexty == -1:
-							print("GOING SOUTH")
-							if mang == 3:
-								miceMoves[i].type = MouseCommand.FORWARD
-							else:
-								miceMoves[i].type = MouseCommand.LEFT
-						else:
-							print("ERROR: NO DIRECTION FOUND!")
-=======
 					computeMoves(miceMoves, score, miceData, reconMap)
->>>>>>> 75dcd3af12bbb159039ec58bfb2f1fc0cb42e646
 
 				msg = GodMail()
 				msg.type = GodMail.COMPUTED
