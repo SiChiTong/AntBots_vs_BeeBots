@@ -10,7 +10,8 @@ from mouse_description.msg import MouseData
 from mouse_control.msg import GodMail
 from mouse_control.msg import UserMail
 from mouse_control.msg import Score
-import path_finding
+
+# Choose algorithm at the bottom!
 
 # Level 1: Total Omniscience
 from mouse_control.msg import Omniscience
@@ -91,7 +92,9 @@ def main():
 	uservalid = False
 
 	# moves to do
-	miceMoves = [None] * NUM
+	miceMoves = [MouseCommand() for _ in range(NUM)]
+
+	initAlg(ISANT, NUM)
 
 	# Level 1: Total Omniscience
 	rospy.Subscriber('/omniscience', Omniscience, omniCallback)
@@ -111,73 +114,10 @@ def main():
 					while not uservalid:
 						pass
 					for i in range(NUM):
-						miceMoves[i] = MouseCommand()
 						miceMoves[i].type = usercmd.type[i]
 					uservalid = False
 				else:
-					# TODO perform computation here, all sensor data should be valid
-					# DEMO remove later
-					#for i in range(NUM):
-					#	miceMoves[i] = MouseCommand()
-					#	miceMoves[i].type = MouseCommand.LEFT
-
-					flagx, flagy = -1, -1
-					for x in range(WORLD_WIDTH):
-						for y in range(WORLD_HEIGHT):
-							if reconMap[x][y] == 'F':
-								
-								flagx, flagy = x, y
-								print("FLAG HERE:")
-								print(flagx, flagy)
-					
-					# if flagx == -1 and flagy == -1:
-					# 	print("error: no flag detected")
-					
-	
-					for i in range(NUM):
-						current_mouse = miceData[i]
-						mx, my = current_mouse.x, current_mouse.y
-						mang = current_mouse.ang
-
-						path_array = path_finding.astar(mx, my, flagx, flagy, reconMap, WORLD_HEIGHT, WORLD_WIDTH)
-						print(path_array)
-
-						nextx, nexty = 0, 0
-						
-						if (path_array[mx + 1][my] == (mx, my)):
-							nextx = 1
-						elif (path_array[mx - 1][my] == (mx, my)):
-							nextx = -1
-						elif (path_array[mx][my + 1] == (mx, my)):
-							nexty = 1
-						elif (path_array[mx][my - 1] == (mx, my)):
-							nexty = -1
-						else:
-							print("error: bad path")
-						
-						miceMoves[i] = MouseCommand()
-
-						print("NEXT")
-						print(nextx)
-						print(nexty)
-						## ONLY TURNING RIGHT FOR TESTING, NOT CORRECTLY TURNING / MOVING YET
-						if (nextx == 1):
-							# go right
-							print("HIT RIGHT")
-							#if (mang[num])
-							miceMoves[i].type = MouseCommand.LEFT
-							print("MANG")
-							print(mang)
-						elif (nextx == -1):
-							# go left
-							print("HIT LEFT")
-							miceMoves[i].type = MouseCommand.LEFT
-						elif (nexty == 1):
-							#go up
-							miceMoves[i].type = MouseCommand.LEFT
-						else:
-							#go backwards
-							miceMoves[i].type = MouseCommand.LEFT
+					computeMoves(miceMoves, score, miceData, reconMap)
 
 				msg = GodMail()
 				msg.type = GodMail.COMPUTED
@@ -203,7 +143,15 @@ if __name__ == '__main__':
 	rospy.init_node('mothership')
 	global ROLE, NUM
 	ROLE = rospy.get_namespace()
-	NUM = rospy.get_param('/NUM_ANTS' if ROLE=='/ants/' else '/NUM_BEES')
+	ISANT = ROLE == '/ants/'
+	NUM = rospy.get_param('/NUM_ANTS' if ISANT else '/NUM_BEES')
+
+	# Choose algorithm here!
+	if ISANT:
+		from algorithms.template import initAlg, computeMoves
+	else:
+		from algorithms.template import initAlg, computeMoves
+
 	try:
 		main()
 	except rospy.ROSInterruptException:
