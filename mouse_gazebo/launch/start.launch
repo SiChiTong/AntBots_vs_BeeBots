@@ -3,7 +3,7 @@
 	<!-- Wall and divider size doesn't change with this -->
 	<param name="GRID_SIZE" value="0.18"/>
 	
-	<param name="WORLD_FILE" value="$(find mouse_gazebo)/launch/test.txt"/>
+	<param name="WORLD_FILE" value="$(find mouse_gazebo)/launch/basic.txt"/>
 
 	<!-- Debug aids -->
 	<param name="ANTS_USERCONTROL" value="false"/>

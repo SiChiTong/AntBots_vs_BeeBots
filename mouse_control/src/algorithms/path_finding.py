@@ -20,7 +20,7 @@ def astar(sx, sy, ex, ey, reconMap, height, width):
     while open_list:
         # temp variables for minimum F and minimum tuple
         min_f = float('inf')
-        # MIN_TUPLE = (x, y, F, G, parentx, parent y)
+        # MIN_TUPLE = (x, y, F, G, parentx, parenty)
         min_tuple = (-1, -1, -1, -1, -1, -1)
 
         for open_node in open_list:
