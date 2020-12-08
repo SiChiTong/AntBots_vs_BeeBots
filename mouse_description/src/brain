@@ -98,8 +98,6 @@ def dist(x1, y1, x2, y2, a1=0, a2=0):
 def getMouseNum():
 	return int(rospy.get_namespace()[-2])
 
-# Control Loops
-
 # Position based control
 # Uses state machine that performs actions while in a state, not on transition, for cleaner code
 # extremely strange instability above ~1.5m/s, happens in real life too
@@ -154,6 +152,36 @@ def positionLoop(xd, yd, angd=0, MAXLIN=0.5, MAXANG=8):
 positionLoop.States = Enum('posStates', 'ORIENT BEELINE ALIGN')
 positionLoop.state = positionLoop.States.ORIENT
 
+def computeKnownCells(msg):
+	dxys = [(1,0),(0,1),(-1,0),(0,-1)] # direction 0-3
+
+	def traceCells(ang, dis, typ, fla):
+		dx, dy = dxys[ang]
+		xs, ys = xd + dx, yd + dy
+		if dis == 0: # out of range so all blocks in range are air
+			for i in range(0, sense.maxRange):
+				msg.types.append(SensorData.AIR)
+				msg.flags.append(False)
+				msg.xs.append(xs)
+				msg.ys.append(ys)
+				xs += dx
+				ys += dy
+		else:
+			for i in range(0, dis - 1):
+				msg.types.append(SensorData.AIR)
+				msg.flags.append(False)
+				msg.xs.append(xs)
+				msg.ys.append(ys)
+				xs += dx
+				ys += dy
+			msg.types.append(typ)
+			msg.flags.append(fla)
+			msg.xs.append(xs)
+			msg.ys.append(ys)
+
+	traceCells((angd+1)%4, sense.leftDist, sense.leftType, sense.leftFlag)
+	traceCells(angd, sense.centerDist, sense.centerType, sense.centerFlag)
+	traceCells((angd-1)%4, sense.rightDist, sense.rightType, sense.rightFlag)
 
 def main():
 	# internal stuff
@@ -178,6 +206,8 @@ def main():
 		x, y, a = discreteToCont(xd, yd, angd)
 		pos = getPos()
 		msg.aligned = dist(x, y, pos[0], pos[1], a, pos[2]) < 0.1
+		msg.hasFlag = sense.hasFlag
+		computeKnownCells(msg)
 		telem.publish(msg)
 
 		r.sleep()

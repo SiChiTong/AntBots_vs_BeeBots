@@ -33,6 +33,7 @@ def laserCallback(data):
 
 	# TODO lower freq
 	MAX_RANGE = math.ceil(data.range_max / GRID)
+	outData.maxRange = MAX_RANGE
 
 	if 'left_ir' in data.header.frame_id:
 		outData.leftDist = dist
