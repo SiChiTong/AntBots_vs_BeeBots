@@ -116,11 +116,7 @@ def main():
 					uservalid = False
 				else:
 					# TODO perform computation here, all sensor data should be valid
-					# DEMO remove later
-					#for i in range(NUM):
-					#	miceMoves[i] = MouseCommand()
-					#	miceMoves[i].type = MouseCommand.LEFT
-
+			
 					flagx, flagy = -1, -1
 					for x in range(WORLD_WIDTH):
 						for y in range(WORLD_HEIGHT):
@@ -130,54 +126,60 @@ def main():
 								print("FLAG HERE:")
 								print(flagx, flagy)
 					
-					# if flagx == -1 and flagy == -1:
-					# 	print("error: no flag detected")
-					
-	
 					for i in range(NUM):
 						current_mouse = miceData[i]
 						mx, my = current_mouse.x, current_mouse.y
 						mang = current_mouse.ang
 
-						path_array = path_finding.astar(mx, my, flagx, flagy, reconMap, WORLD_HEIGHT, WORLD_WIDTH)
-						print(path_array)
+						close_list = path_finding.astar(mx, my, flagx, flagy, reconMap, WORLD_HEIGHT, WORLD_WIDTH)
+						print(close_list)
 
 						nextx, nexty = 0, 0
+						# (x, y, F, G, parentx, parenty)
 						
-						if (path_array[mx + 1][my] == (mx, my)):
-							nextx = 1
-						elif (path_array[mx - 1][my] == (mx, my)):
-							nextx = -1
-						elif (path_array[mx][my + 1] == (mx, my)):
-							nexty = 1
-						elif (path_array[mx][my - 1] == (mx, my)):
-							nexty = -1
-						else:
-							print("error: bad path")
+						for c in close_list:
+							if c[4] == mx and c[5] == my:
+								nextx = c[0] - mx
+								nexty = c[1] - my
+						#if (parent_array[mx + 1][my] == (mx, my)):
+						#	nextx = 1
+						#elif (parent_array[mx - 1][my] == (mx, my)):
+						#	nextx = -1
+						#elif (parent_array[mx][my + 1] == (mx, my)):
+						#	nexty = 1
+						#elif (parent_array[mx][my - 1] == (mx, my)):
+						#	nexty = -1
+						#else:
+						#	print("ERROR: NO PATH FOUND TO FLAG!")
 						
 						miceMoves[i] = MouseCommand()
 
-						print("NEXT")
-						print(nextx)
-						print(nexty)
-						## ONLY TURNING RIGHT FOR TESTING, NOT CORRECTLY TURNING / MOVING YET
-						if (nextx == 1):
-							# go right
-							print("HIT RIGHT")
-							#if (mang[num])
-							miceMoves[i].type = MouseCommand.LEFT
-							print("MANG")
-							print(mang)
-						elif (nextx == -1):
-							# go left
-							print("HIT LEFT")
-							miceMoves[i].type = MouseCommand.LEFT
-						elif (nexty == 1):
-							#go up
-							miceMoves[i].type = MouseCommand.LEFT
+						if nextx == 1:
+							print("GOING EAST")
+							if mang == 0:
+								miceMoves[i].type = MouseCommand.FORWARD
+							else:
+								miceMoves[i].type = MouseCommand.LEFT
+						elif nextx == -1:
+							print("GOING WEST")
+							if mang == 2:
+								miceMoves[i].type = MouseCommand.FORWARD
+							else:
+								miceMoves[i].type = MouseCommand.LEFT
+						elif nexty == 1:
+							print("GOING NORTH")
+							if mang == 1:
+								miceMoves[i].type = MouseCommand.FORWARD
+							else:
+								miceMoves[i].type = MouseCommand.LEFT
+						elif nexty == -1:
+							print("GOING SOUTH")
+							if mang == 3:
+								miceMoves[i].type = MouseCommand.FORWARD
+							else:
+								miceMoves[i].type = MouseCommand.LEFT
 						else:
-							#go backwards
-							miceMoves[i].type = MouseCommand.LEFT
+							print("ERROR: NO DIRECTION FOUND!")
 
 				msg = GodMail()
 				msg.type = GodMail.COMPUTED
