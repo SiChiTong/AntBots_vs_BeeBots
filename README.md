@@ -52,15 +52,10 @@ You can also clone this repo into your own workspace!
 
 	# Tip to kill stuff super quick
 	rosnode kill -a
-
-	# Tip in case processes don't die properly
 	pkill -f python3 -9
 
-	# Tip for viewing debugging messages on /rosout
-	rosconsole echo -l debug
-
 	# Manual Control
-	# edit mouse_gazebo/start.launch to enable manual control for one team
+	# edit mouse_gazebo/launch/start.launch to enable manual control for one team
 	rosrun mouse_control manualcontrol
 
 ## Stuff of Interest

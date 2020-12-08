@@ -393,6 +393,11 @@ def main():
 				# Level 1: Total Omniscience
 				leakMap()
 
+				# technically everything being updated isn't guaranteed (tiny chance)
+				# bc messages might not be processed in time
+				# can add a small delay here to decrease that chance significantly
+				rospy.sleep(0.1)
+
 				msg = GodMail()
 				msg.type = GodMail.COMPUTE
 				antSocket.publish(msg)

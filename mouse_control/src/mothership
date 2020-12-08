@@ -10,7 +10,8 @@ from mouse_description.msg import MouseData
 from mouse_control.msg import GodMail
 from mouse_control.msg import UserMail
 from mouse_control.msg import Score
-import path_finding
+
+# Choose algorithm at the bottom!
 
 # Level 1: Total Omniscience
 from mouse_control.msg import Omniscience
@@ -91,7 +92,9 @@ def main():
 	uservalid = False
 
 	# moves to do
-	miceMoves = [None] * NUM
+	miceMoves = [MouseCommand() for _ in range(NUM)]
+
+	initAlg(ISANT, NUM)
 
 	# Level 1: Total Omniscience
 	rospy.Subscriber('/omniscience', Omniscience, omniCallback)
@@ -111,10 +114,10 @@ def main():
 					while not uservalid:
 						pass
 					for i in range(NUM):
-						miceMoves[i] = MouseCommand()
 						miceMoves[i].type = usercmd.type[i]
 					uservalid = False
 				else:
+<<<<<<< HEAD
 					# TODO perform computation here, all sensor data should be valid
 			
 					flagx, flagy = -1, -1
@@ -180,6 +183,9 @@ def main():
 								miceMoves[i].type = MouseCommand.LEFT
 						else:
 							print("ERROR: NO DIRECTION FOUND!")
+=======
+					computeMoves(miceMoves, score, miceData, reconMap)
+>>>>>>> 75dcd3af12bbb159039ec58bfb2f1fc0cb42e646
 
 				msg = GodMail()
 				msg.type = GodMail.COMPUTED
@@ -205,7 +211,15 @@ if __name__ == '__main__':
 	rospy.init_node('mothership')
 	global ROLE, NUM
 	ROLE = rospy.get_namespace()
-	NUM = rospy.get_param('/NUM_ANTS' if ROLE=='/ants/' else '/NUM_BEES')
+	ISANT = ROLE == '/ants/'
+	NUM = rospy.get_param('/NUM_ANTS' if ISANT else '/NUM_BEES')
+
+	# Choose algorithm here!
+	if ISANT:
+		from algorithms.template import initAlg, computeMoves
+	else:
+		from algorithms.template import initAlg, computeMoves
+
 	try:
 		main()
 	except rospy.ROSInterruptException:

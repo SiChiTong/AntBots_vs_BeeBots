@@ -6,6 +6,15 @@ from gazebo_msgs.srv import DeleteModel
 
 NODES_KEEP = ['/rosout', '/gazebo_gui', '/gazebo', '/mapper']
 MODELS_KEEP = ['ground_plane']
+MODELS_KEEP_PATTERNS = ['box', 'div', '_flag']
+
+def modelKeep(s):
+	if s in MODELS_KEEP:
+		return True
+	for m in MODELS_KEEP_PATTERNS:
+		if m in s:
+			return True
+	return False
 
 if __name__ == '__main__':
 	rospy.init_node('killer')
@@ -21,7 +30,7 @@ if __name__ == '__main__':
 		print('Deleting certain models...')
 		rospy.ServiceProxy('/gazebo/unpause_physics', Empty)()
 		for m in rospy.wait_for_message('/gazebo/model_states', ModelStates, timeout=1.0).name:
-			if m not in MODELS_KEEP:
+			if not modelKeep(m):
 				print('Deleting', m)
 				rospy.ServiceProxy('/gazebo/delete_model', DeleteModel)(m)
 		
