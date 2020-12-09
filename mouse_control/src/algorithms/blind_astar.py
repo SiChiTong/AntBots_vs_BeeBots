@@ -1,0 +1,3 @@
+# one day, man was banished from the kingdom of heaven, forced to walk
+# the salted earth with one eye closed...
+
