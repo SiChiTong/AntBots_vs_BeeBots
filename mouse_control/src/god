@@ -355,7 +355,7 @@ def main():
 		pass
 	antTransition = False
 
-	r = rospy.Rate(10) # changing this can change the game's speed
+	r = rospy.Rate(1) # changing this can change the game's speed
 	while not rospy.is_shutdown():
 		if state == States.WAITALIGN:
 			if isAntsTurn and beeTransition: # wait for bees to finish turn

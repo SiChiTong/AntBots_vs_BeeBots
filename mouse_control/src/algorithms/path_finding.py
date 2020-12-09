@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+import copy 
+from collections import defaultdict
+import heapq
+
 from mouse_description.msg import MouseCommand
 
 # determines path to take based on A* search algorithm
@@ -133,3 +137,86 @@ def get_move(astar_path, mx, my, mang):
             return MouseCommand.FORWARD
         else:
             return MouseCommand.LEFT
+
+class RobotState(object):
+    def __init__(x, y, theta):
+        self.x = x
+        self.y = y
+        self.theta = theta
+
+    def __eq__(self, other):
+        return other and self.x == other.x and self.y == other.y and self.theta == other.theta
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(): 
+        return hash((self.x, self.y, self.theta))
+
+def djistrka(sx, sy, st, ex, ey, rMap, height, width):
+    start_state = RobotState(sx, sy, st)
+    q, visited, cost_map, parent = [(0, start_state)], set(), {}, {}
+    while q:
+        (cost, state) = heapq.heappop(q)
+        if state in visited: continue
+        visited.add(state)
+        for (action, neighbor) in get_valid_neighbors(state, rMap, height, width):
+            if neighbor in visited: continue 
+            if neighbor.x == ex and neighbor.y == ey:
+                return get_dijstrka_trajectory(start=start, end=neighbor, parent=parent)
+            prev_cost = cost_map[neighbor]
+            new_cost = cost + 1
+            if prev_cost is None or new_cost < prev_cost:
+                cost_map[neighbor] = new_cost
+                parent[neighbor] = (action, state)
+                heappush(q, (new_cost, neighbor))
+    return None 
+
+def get_dijstrka_trajectory(start, end, parent):
+    action, state, trajectory = None, end, []
+    while state != start:
+        action, parent_state = parent[state]
+        trajectory.append((action, state))
+        state = parent_state 
+    return list(reversed(trajectory))
+
+
+def get_valid_neighbors(state, rMap, height, width):
+    def is_valid_state(state):
+        sc = rMap[state.x][state.y]
+        return 0 <= state.x < width and 0 <= state.y < height \
+            and (' ' == sc or 'F' == sc)
+
+    actions = [MouseCommand.LEFT, MouseCommand.RIGHT, MouseCommand.FORWARD, MouseCommand.STOP]    
+    neighbors = []
+    for a in actions: 
+        neighbor = state.copy()
+        if a == MouseCommand.LEFT:
+            neighbor.theta = (state.theta + 3) % 4
+        elif a == MouseCommand.RIGHT:
+            neighbor.theta = (state.theta + 1) % 4
+        elif a == MouseCommand.STOP:
+            pass 
+        else: 
+            if state.theta == 0: #E
+                neighbor.x += 1
+            elif state.theta == 1: #N
+                neighbor.y += 1
+            elif state.theta == 2: #W
+                neighbor.x -= 1
+            else: #S
+                neighbor.y -= 1   
+        if is_valid_state(neighbor):
+            neighbors.append((a, neighbor))     
+    return neighbors
+
+def print_astar_path(astar_path, sx, sy, ex, ey, rmap):	
+    aMap = copy.deepcopy(rMap) 
+    for nodes in astar_path:
+        nodes[0], nodes[1],
+
+
+    for y in reversed(range(WORLD_HEIGHT)):
+		for x in range(WORLD_WIDTH):
+			print(f'{aMap[x][y]:^5}', end="")
+		print()

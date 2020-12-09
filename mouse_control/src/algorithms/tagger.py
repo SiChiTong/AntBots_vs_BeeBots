@@ -55,7 +55,7 @@ def getClosestEnemyInRmap(sx, sy, rmap):
 				closestEnemyX = x
 				closestEnemyY = y
 	return closestEnemyX, closestEnemyY, closestEnemyManhattanDist
-
+	
 
 def computeMoves(miceMoves, score, miceData, reconMap):
 	# miceMoves - modify this with the moves u wanna do
@@ -70,5 +70,5 @@ def computeMoves(miceMoves, score, miceData, reconMap):
 		mang = current_mouse.ang
 		enemy_x, enemy_y, enemy_dist = getClosestEnemyInRmap(mx, my, reconMap)
 		assert enemy_x != -1 and enemy_y != -1 
-		astar_path = path_finding.astar(mx, my, enemy_x, enemy_y, reconMap, WORLD_HEIGHT, WORLD_WIDTH)
-		miceMoves[i].type = path_finding.get_move(astar_path, mx, my, mang)
+		dijstrka_path = path_finding.djistrka(mx, my, enemy_x, enemy_y, reconMap, WORLD_HEIGHT, WORLD_WIDTH)
+		miceMoves[i].type = dijstrka_path[0][0]
