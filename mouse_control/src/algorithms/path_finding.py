@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+from mouse_description.msg import MouseCommand
+
 # determines path to take based on A* search algorithm
 def astar(sx, sy, ex, ey, reconMap, height, width):
     found_path = False
@@ -97,3 +100,36 @@ def isValid(tuple, reconMap):
     if reconMap[x][y] == 'B':
         return False
     return True
+
+
+def get_move(astar_path, mx, my, mang):
+    nextx, nexty = 0, 0
+    for node in astar_path:
+        if node[4] == mx and node[5] == my:
+            nextx = node[0] - mx
+            nexty = node[1] - my
+
+    if (nextx == 1):
+        # go EAST
+        if mang == 0:
+            return MouseCommand.FORWARD
+        else:
+            return MouseCommand.LEFT
+    elif (nextx == -1):
+        # go WEST
+        if mang == 2:
+            return MouseCommand.FORWARD
+        else:
+            return MouseCommand.LEFT
+    elif (nexty == 1):
+        #go NORTH
+        if mang == 1:
+            return MouseCommand.FORWARD
+        else:
+            return MouseCommand.LEFT
+    elif (nexty == -1):
+        #go SOUTH
+        if mang == 3:
+            return MouseCommand.FORWARD
+        else:
+            return MouseCommand.LEFT

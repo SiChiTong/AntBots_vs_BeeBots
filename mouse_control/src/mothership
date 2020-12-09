@@ -150,7 +150,7 @@ if __name__ == '__main__':
 	if ISANT:
 		from algorithms.naive_astar import initAlg, computeMoves
 	else:
-		from algorithms.naive_astar import initAlg, computeMoves
+		from algorithms.tagger import initAlg, computeMoves
 
 	try:
 		main()
