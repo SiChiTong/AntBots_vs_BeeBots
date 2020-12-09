@@ -317,11 +317,11 @@ def main():
 	for i in range(NUM_ANTS):
 		rospy.Subscriber(f'ants/ant{i}/telemetry', MouseData, dataCallback, (antData, i))
 		antControl.append(rospy.Publisher(f'ants/ant{i}/command', MouseCommand, queue_size=10))
-		antVision.append(rospy.Publisher(f'ants/ant{i}/vision', Vision, queue_size=10))
+		# antVision.append(rospy.Publisher(f'ants/ant{i}/vision', Vision, queue_size=10))
 	for i in range(NUM_BEES):
 		rospy.Subscriber(f'bees/bee{i}/telemetry', MouseData, dataCallback, (beeData, i))
 		beeControl.append(rospy.Publisher(f'bees/bee{i}/command', MouseCommand, queue_size=10))
-		beeVision.append(rospy.Publisher(f'bees/bee{i}/vision', Vision, queue_size=10))
+		# beeVision.append(rospy.Publisher(f'bees/bee{i}/vision', Vision, queue_size=10))
 
 	# state machine setup
 	global States, state, antTransition, beeTransition
@@ -347,7 +347,7 @@ def main():
 	# Level 1: Total Omniscience
 	global omnipub
 	omnipub = rospy.Publisher('/omniscience', Omniscience, queue_size=10)
-	while omnipub.get_num_connections() != 2:
+	while omnipub.get_num_connections() != (2 + NUM_ANTS + NUM_BEES):
 		pass
 
 	# Wait for alignment first
@@ -367,7 +367,7 @@ def main():
 				reconstructMap()
 				flagLogic()
 				reconstructMap()
-				sensorLogic()
+				# sensorLogic()
 				pointLogic()
 
 				leakMap() # Level 1: Total Omniscience
@@ -388,7 +388,7 @@ def main():
 				reconstructMap()
 				flagLogic()
 				reconstructMap()
-				sensorLogic()
+				# sensorLogic()
 				# no point logic do when bees finish
 				rospy.loginfo(f'antScore: {antScore} beeScore: {beeScore}')
 

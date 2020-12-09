@@ -8,14 +8,33 @@ from mouse_description.msg import MouseCommand
 from mouse_description.msg import MouseData
 from mouse_description.msg import SensorData
 
+# Level 2: Hivemind
+from mouse_control.msg import Omniscience
+
+WORLD_HEIGHT = rospy.get_param('/WORLD_HEIGHT')
+WORLD_WIDTH = rospy.get_param('/WORLD_WIDTH')
+reconMap = [[' ' for j in range(WORLD_HEIGHT)] for i in range(WORLD_WIDTH)]
+
+def omniCallback(data):
+	for x in range(WORLD_WIDTH):
+		for y in range(WORLD_HEIGHT):
+			reconMap[x][y] = ' '
+	for t, x, y in zip(data.type, data.x, data.y):
+		reconMap[x][y] = t
+
 # DAQ
 sense = None
 
 # commands from the mothership
 def commandCallback(data):
 	global xd, yd, angd, imm
+
+	dxys = [(1,0),(0,1),(-1,0),(0,-1)] # direction 0-3
+	dx, dy = dxys[angd]
+	fx, fy = xd+dx, yd+dy # cell in front
+
 	if data.type == MouseCommand.FORWARD:
-		if sense.centerDist != 1 or sense.centerType == SensorData.AIR or data.force:
+		if reconMap[fx][fy] == ' ' or reconMap[fx][fy] == 'F' or data.force:
 			xd += 1 if angd == MouseData.EAST else 0
 			yd += 1 if angd == MouseData.NORTH else 0
 			xd -= 1 if angd == MouseData.WEST else 0
@@ -44,55 +63,53 @@ xd = 0
 yd = 0
 angd = MouseData.EAST
 
-def computeKnownCells(msg):
+# Level 2: Omniscience
+def computeRadiusCells(msg):
+	# simulates laser + camera data by picking out from omniscience data what would have been identified
+	MAX_RANGE = 3 # manhattan distance
 	dxys = [(1,0),(0,1),(-1,0),(0,-1)] # direction 0-3
 
-	def traceCells(ang, dis, typ, fla):
-		dx, dy = dxys[ang]
-		xs, ys = xd + dx, yd + dy
-		if dis == 0: # out of range so all blocks in range are air
-			for i in range(0, sense.maxRange):
-				msg.types.append(SensorData.AIR)
-				msg.flags.append(False)
-				msg.xs.append(xs)
-				msg.ys.append(ys)
-				xs += dx
-				ys += dy
-		else:
-			for i in range(0, dis - 1):
-				msg.types.append(SensorData.AIR)
-				msg.flags.append(False)
-				msg.xs.append(xs)
-				msg.ys.append(ys)
-				xs += dx
-				ys += dy
-			msg.types.append(typ)
-			msg.flags.append(fla)
-			msg.xs.append(xs)
-			msg.ys.append(ys)
+	ldx, ldy = dxys[(angd + 1) % 4]
+	cdx, cdy = dxys[angd]
+	rdx, rdy = dxys[(angd - 1) % 4]
 
-	traceCells((angd+1)%4, sense.leftDist, sense.leftType, sense.leftFlag)
-	traceCells(angd, sense.centerDist, sense.centerType, sense.centerFlag)
-	traceCells((angd-1)%4, sense.rightDist, sense.rightType, sense.rightFlag)
+	# filter out what we can see
+	pts = set()
+	pts.add((xd, yd))
+	for _ in range(MAX_RANGE):
+		oldpts = pts.copy()
+		for x, y in oldpts:
+			pts.add((x+ldx,y+ldy))
+			pts.add((x+cdx,y+cdy))
+			pts.add((x+rdx,y+rdy))
+
+	# get the points
+	for x, y in pts:
+		if x >= 0 and x < WORLD_WIDTH and y >= 0 and y < WORLD_HEIGHT:
+			msg.types.append(reconMap[x][y])
+			msg.xs.append(x)
+			msg.ys.append(y)
 
 def main():
 	# internal stuff
-	rospy.Subscriber('sensor_data', SensorData, sensorCallback)
+	# rospy.Subscriber('sensor_data', SensorData, sensorCallback)
 
 	# wireless comms w/ mothership
 	rospy.Subscriber('command', MouseCommand, commandCallback)
 	telem = rospy.Publisher('telemetry', MouseData, queue_size=10)
 
-	while not sense:
-		pass # wait until sensors are booted
+	# while not sense:
+	# 	pass # wait until sensors are booted
+
+	# Level 2: Hivemind
+	rospy.Subscriber('/omniscience', Omniscience, omniCallback)
 
 	r = rospy.Rate(30)
 	while not rospy.is_shutdown():
 		msg = MouseData()
 		msg.x, msg.y, msg.ang = xd, yd, angd
 		msg.aligned = True
-		msg.hasFlag = sense.hasFlag
-		computeKnownCells(msg)
+		computeRadiusCells(msg)
 		telem.publish(msg)
 
 		r.sleep()
