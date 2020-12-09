@@ -61,14 +61,17 @@ def computeMoves(miceMoves, score, miceData, reconMap):
 			current_mouse = miceData[i]
 			mx, my = current_mouse.x, current_mouse.y
 			mang = current_mouse.ang
+			
+			types = current_mouse.types
+			xs = current_mouse.xs
+			ys = current_mouse.ys
 
 			# created an updated recon map with radius information here:
 			updatedReconMap = copy.deepcopy(reconMap)
 
-			# data = the neutered god node information we will receive
-			for i in range(radius):
-				for j in range(radius):
-					updatedReconMap[x + i][y + j] = data[x + i][y + j]
+			for i in len(types):
+				newx, newy = xs[i], ys[i]
+				updatedReconMap[newx][newy] = types[i]
 
 			reconMap = updatedReconMap
 
@@ -115,14 +118,17 @@ def computeMoves(miceMoves, score, miceData, reconMap):
 			current_mouse = miceData[i]
 			mx, my = current_mouse.x, current_mouse.y
 			mang = current_mouse.ang
+
+			types = current_mouse.types
+			xs = current_mouse.xs
+			ys = current_mouse.ys
 			
 			# created an updated recon map with radius information here:
 			updatedReconMap = copy.deepcopy(reconMap)
 
-			# data = the neutered god node information we will receive
-			for i in range(radius):
-				for j in range(radius):
-					updatedReconMap[x + i][y + j] = data[x + i][y + j]
+			for i in len(types):
+				newx, newy = xs[i], ys[i]
+				updatedReconMap[newx][newy] = types[i]
 
 			reconMap = updatedReconMap		
 
@@ -164,6 +170,5 @@ def computeMoves(miceMoves, score, miceData, reconMap):
 					miceMoves[i].type = MouseCommand.FORWARD
 				else:
 					miceMoves[i].type = MouseCommand.LEFT
-y, enemyFlag[0], enemyFlag[1], updatedReconMap, WORLD_HEIGHT, WORLD_WIDTH)
 
 	return updatedReconMap

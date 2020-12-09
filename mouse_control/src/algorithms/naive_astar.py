@@ -102,7 +102,7 @@ def computeMoves(miceMoves, score, miceData, reconMap):
 		for i in range(NUM):
 			current_mouse = miceData[i]
 			mx, my = current_mouse.x, current_mouse.y
-			mang = current_mouse.ang
+			macomputeMovesng = current_mouse.ang
 
 			if 'BF' in reconMap[mx][my]:
 				close_list = path_finding.astar(mx, my, myFlag[0], myFlag[1], reconMap, WORLD_HEIGHT, WORLD_WIDTH)
