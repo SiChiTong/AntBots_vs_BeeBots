@@ -59,8 +59,14 @@ def computeMoves(miceMoves, score, miceData, reconMap):
 			current_mouse = miceData[i]
 			mx, my = current_mouse.x, current_mouse.y
 			mang = current_mouse.ang
-			
-			close_list = path_finding.astar(mx, my, enemyFlag[0], enemyFlag[1], reconMap, WORLD_HEIGHT, WORLD_WIDTH)
+			print(reconMap[mx][my])
+			if 'AF' in reconMap[mx][my]:
+				# HAS FLAG
+				print("I AM AN ANT AND I HAVE THE FLAG, TRYING TO GO BACK TO MY FLAG LOCATION")
+				close_list = path_finding.astar(mx, my, myFlag[0], myFlag[1], reconMap, WORLD_HEIGHT, WORLD_WIDTH)
+			else:
+				# DOES NOT HAVE FLAG
+				close_list = path_finding.astar(mx, my, enemyFlag[0], enemyFlag[1], reconMap, WORLD_HEIGHT, WORLD_WIDTH)
 						
 			nextx, nexty = 0, 0
 
@@ -70,13 +76,13 @@ def computeMoves(miceMoves, score, miceData, reconMap):
 					nexty = close_node[1] - my
 
 			if (nextx == 1):
-				# go EASTboulders_large
+				#go EAST
 				if mang == 0:
 					miceMoves[i].type = MouseCommand.FORWARD
 				else:
 					miceMoves[i].type = MouseCommand.LEFT
 			elif (nextx == -1):
-				# go WEST
+				#go WEST
 				if mang == 2:
 					miceMoves[i].type = MouseCommand.FORWARD
 				else:
@@ -98,9 +104,13 @@ def computeMoves(miceMoves, score, miceData, reconMap):
 			current_mouse = miceData[i]
 			mx, my = current_mouse.x, current_mouse.y
 			mang = current_mouse.ang
-			
-			close_list = path_finding.astar(mx, my, enemyFlag[0], enemyFlag[1], reconMap, WORLD_HEIGHT, WORLD_WIDTH)
-			
+
+			if 'BF' in reconMap[mx][my]:
+				close_list = path_finding.astar(mx, my, myFlag[0], myFlag[1], reconMap, WORLD_HEIGHT, WORLD_WIDTH)
+			else:
+				# DOES NOT HAVE MAP
+				close_list = path_finding.astar(mx, my, enemyFlag[0], enemyFlag[1], reconMap, WORLD_HEIGHT, WORLD_WIDTH)
+						
 			nextx, nexty = 0, 0
 
 			for close_node in close_list:
@@ -109,13 +119,13 @@ def computeMoves(miceMoves, score, miceData, reconMap):
 					nexty = close_node[1] - my
 
 			if (nextx == 1):
-				# go EAST
+				#go EAST
 				if mang == 0:
 					miceMoves[i].type = MouseCommand.FORWARD
 				else:
 					miceMoves[i].type = MouseCommand.LEFT
 			elif (nextx == -1):
-				# go WEST
+				#go WEST
 				if mang == 2:
 					miceMoves[i].type = MouseCommand.FORWARD
 				else:
