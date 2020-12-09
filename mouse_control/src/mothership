@@ -148,7 +148,7 @@ if __name__ == '__main__':
 
 	# Choose algorithm here!
 	if ISANT:
-		from algorithms.naive_astar import initAlg, computeMoves
+		from algorithms.attacker import initAlg, computeMoves
 	else:
 		from algorithms.tagger import initAlg, computeMoves
 

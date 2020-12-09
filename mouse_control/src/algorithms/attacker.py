@@ -68,9 +68,11 @@ def computeMoves(miceMoves, score, miceData, reconMap):
 		current_mouse = miceData[i]
 		mx, my = current_mouse.x, current_mouse.y
 		mang = current_mouse.ang
-		enemy_x, enemy_y, enemy_dist = getClosestEnemyInRmap(mx, my, reconMap)
-		assert enemy_x != -1 and enemy_y != -1 
-		traj = path_finding.djistrka(mx, my, mang, enemy_x, enemy_y, ENEMYCHAR, reconMap, WORLD_HEIGHT, WORLD_WIDTH)
+        if current_mouse.hasFlag:
+            nx, ny = myFlag
+        else: 
+            nx, ny = enemyFlag
+		traj = path_finding.djistrka(mx, my, mang, nx, ny, ENEMYCHAR, reconMap, WORLD_HEIGHT, WORLD_WIDTH)
 		for (a, s) in traj: print(f"A: {a} s: {s}")
 		miceMoves[i].type = traj[0][0]
-		print("Moving Bee: ", miceMoves[i].type)
+		print("Moving Ant: ", miceMoves[i].type)

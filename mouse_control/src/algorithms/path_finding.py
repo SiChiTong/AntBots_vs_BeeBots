@@ -139,7 +139,7 @@ def get_move(astar_path, mx, my, mang):
             return MouseCommand.LEFT
 
 class RobotState(object):
-    def __init__(x, y, theta):
+    def __init__(self, x, y, theta):
         self.x = x
         self.y = y
         self.theta = theta
@@ -150,26 +150,36 @@ class RobotState(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def __hash__(): 
+    def __hash__(self): 
         return hash((self.x, self.y, self.theta))
 
-def djistrka(sx, sy, st, ex, ey, rMap, height, width):
+    def __copy__(self):
+        return RobotState(self.x, self.y, self.theta)
+
+    def __lt__(self, other):
+        return other.x < self.x or other.y < self.y
+
+    def __repr__(self):
+        return f"(x: {self.x}, y: {self.y}, t: {self.theta})"
+
+def djistrka(sx, sy, st, ex, ey, enemy_char, rMap, height, width):
     start_state = RobotState(sx, sy, st)
-    q, visited, cost_map, parent = [(0, start_state)], set(), {}, {}
+    q, visited, cost_map, parent = [(0, start_state)], set(), defaultdict(lambda: float('inf')), {}
     while q:
         (cost, state) = heapq.heappop(q)
+        #print(f"Cost: {cost} State: {state}, sx: {sx}, sy: {sy}, ex: {ex}, ey: {ey}, height: {height}, width: {width}")
         if state in visited: continue
+        if state.x == ex and state.y == ey:
+            return get_dijstrka_trajectory(start=start_state, end=state, parent=parent)
         visited.add(state)
-        for (action, neighbor) in get_valid_neighbors(state, rMap, height, width):
+        for (action, neighbor) in get_valid_neighbors(state, enemy_char, rMap, height, width):
             if neighbor in visited: continue 
-            if neighbor.x == ex and neighbor.y == ey:
-                return get_dijstrka_trajectory(start=start, end=neighbor, parent=parent)
             prev_cost = cost_map[neighbor]
             new_cost = cost + 1
             if prev_cost is None or new_cost < prev_cost:
                 cost_map[neighbor] = new_cost
                 parent[neighbor] = (action, state)
-                heappush(q, (new_cost, neighbor))
+                heapq.heappush(q, (new_cost, neighbor))
     return None 
 
 def get_dijstrka_trajectory(start, end, parent):
@@ -178,25 +188,28 @@ def get_dijstrka_trajectory(start, end, parent):
         action, parent_state = parent[state]
         trajectory.append((action, state))
         state = parent_state 
+    #for (a, s) in trajectory: print(f"Original A: {a} s: {s}")
     return list(reversed(trajectory))
 
 
-def get_valid_neighbors(state, rMap, height, width):
-    def is_valid_state(state):
+def get_valid_neighbors(state, enemy_char, rMap, height, width):
+    def is_valid_forward_state(state):
         sc = rMap[state.x][state.y]
         return 0 <= state.x < width and 0 <= state.y < height \
-            and (' ' == sc or 'F' == sc)
+            and (' ' == sc or 'F' == sc or enemy_char in sc)
 
     actions = [MouseCommand.LEFT, MouseCommand.RIGHT, MouseCommand.FORWARD, MouseCommand.STOP]    
     neighbors = []
     for a in actions: 
-        neighbor = state.copy()
+        neighbor = copy.copy(state)
         if a == MouseCommand.LEFT:
-            neighbor.theta = (state.theta + 3) % 4
-        elif a == MouseCommand.RIGHT:
             neighbor.theta = (state.theta + 1) % 4
+            neighbors.append((a, neighbor))
+        elif a == MouseCommand.RIGHT:
+            neighbor.theta = (state.theta + 3) % 4
+            neighbors.append((a, neighbor))
         elif a == MouseCommand.STOP:
-            pass 
+            neighbors.append((a, neighbor))
         else: 
             if state.theta == 0: #E
                 neighbor.x += 1
@@ -206,17 +219,6 @@ def get_valid_neighbors(state, rMap, height, width):
                 neighbor.x -= 1
             else: #S
                 neighbor.y -= 1   
-        if is_valid_state(neighbor):
-            neighbors.append((a, neighbor))     
+            if is_valid_forward_state(neighbor):
+                neighbors.append((a, neighbor))     
     return neighbors
-
-def print_astar_path(astar_path, sx, sy, ex, ey, rmap):	
-    aMap = copy.deepcopy(rMap) 
-    for nodes in astar_path:
-        nodes[0], nodes[1],
-
-
-    for y in reversed(range(WORLD_HEIGHT)):
-		for x in range(WORLD_WIDTH):
-			print(f'{aMap[x][y]:^5}', end="")
-		print()

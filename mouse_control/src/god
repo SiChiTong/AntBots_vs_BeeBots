@@ -25,9 +25,16 @@ def leakMap():
 	omnipub.publish(msg)
 
 	# THE GUI
+	orien_symbols = {'0': ">", '1': "^", '2': "<", '3': "v"}
 	for y in reversed(range(WORLD_HEIGHT)):
 		for x in range(WORLD_WIDTH):
-			print(f'{reconMap[x][y]:^5}', end="")
+			r = reconMap[x][y]
+			if 'B' in r or 'A' in r:
+				angle = r[0]
+				a = orien_symbols[angle] + r[1:]
+			else: 
+				a = r
+			print(f'{a:^5}', end="")
 		print()
 
 # Constants
