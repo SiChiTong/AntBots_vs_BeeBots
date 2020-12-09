@@ -13,6 +13,12 @@ from mouse_control.msg import Score
 
 # Choose algorithm at the bottom!
 
+# Choose an awareness level here:
+# LEVEL 1 == omnipotence
+# LEVEL 2 == hivemind
+
+global LEVEL = 2
+
 # Level 1: Total Omniscience
 from mouse_control.msg import Omniscience
 
@@ -117,7 +123,15 @@ def main():
 						miceMoves[i].type = usercmd.type[i]
 					uservalid = False
 				else:
-					computeMoves(miceMoves, score, miceData, reconMap)
+					if LEVEL == 1:
+						# omnipotence activated
+						computeMoves(miceMoves, score, miceData, reconMap)
+					elif LEVEL == 2:
+						# hivemind activated
+						updatedReconMap = computeMoves(miceMoves, score, miceData, reconMap)
+
+						# update reconMap with newest instance from last bot
+						reconMap = updatedReconMap
 
 				msg = GodMail()
 				msg.type = GodMail.COMPUTED

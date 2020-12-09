@@ -62,7 +62,6 @@ def computeMoves(miceMoves, score, miceData, reconMap):
 			print(reconMap[mx][my])
 			if 'AF' in reconMap[mx][my]:
 				# HAS FLAG
-				print("I AM AN ANT AND I HAVE THE FLAG, TRYING TO GO BACK TO MY FLAG LOCATION")
 				close_list = path_finding.astar(mx, my, myFlag[0], myFlag[1], reconMap, WORLD_HEIGHT, WORLD_WIDTH)
 			else:
 				# DOES NOT HAVE FLAG
@@ -142,3 +141,4 @@ def computeMoves(miceMoves, score, miceData, reconMap):
 					miceMoves[i].type = MouseCommand.FORWARD
 				else:
 					miceMoves[i].type = MouseCommand.LEFT
+	
