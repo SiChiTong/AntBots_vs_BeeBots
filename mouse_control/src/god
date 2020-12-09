@@ -390,6 +390,7 @@ def main():
 				reconstructMap()
 				sensorLogic()
 				# no point logic do when bees finish
+				rospy.loginfo(f'antScore: {antScore} beeScore: {beeScore}')
 
 				leakMap() # Level 1: Total Omniscience
 
