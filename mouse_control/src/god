@@ -198,8 +198,8 @@ def tagLogic():
 
 		x, y = beePos[i]
 		if reconMap[x][y] != '':
-			for yp in reverse(range(WORLD_HEIGHT//2, WORLD_HEIGHT)):
-				for xp in reverse(range(WORLD_WIDTH)):
+			for yp in reversed(range(WORLD_HEIGHT//2, WORLD_HEIGHT)):
+				for xp in reversed(range(WORLD_WIDTH)):
 					if reconMap[xp][yp] == '':
 						x, y = xp, yp
 						break

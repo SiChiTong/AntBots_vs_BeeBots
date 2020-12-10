@@ -129,3 +129,4 @@ Change the bottom of mouse_control/src/mothership to pick an algorithm for each 
 	matstar.py
 
 	# Level 3: Minion
+	m3tstar.py
