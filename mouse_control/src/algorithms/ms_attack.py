@@ -1,19 +1,23 @@
 #!/usr/bin/env python3
 import rospy
-import math 
 
 from mouse_description.msg import MouseCommand
-from . import path_finding
-from .robot_state import RobotState
+
+# Import other algorithms
+import algorithms.template as template
+import algorithms.tagger as tagger
+import algorithms.attacker_tom as attacker_tom
+import algorithms.attacker as attacker
 
 # constants
 WORLD_HEIGHT = rospy.get_param('/WORLD_HEIGHT')
 WORLD_WIDTH = rospy.get_param('/WORLD_WIDTH')
-reconMap = [[' ' for j in range(WORLD_HEIGHT)] for i in range(WORLD_WIDTH)]
+
 
 # private variables
 myFlag = None
 enemyFlag = None
+reconMap = [[' ' for j in range(WORLD_HEIGHT)] for i in range(WORLD_WIDTH)]
 
 # helpers
 def computeFlags(rmap):
@@ -35,41 +39,34 @@ def computeFlags(rmap):
 
 # standard interface functions
 def initAlg(isant, numMice):
-	print('Hello! I\'m the attacker algorithm!')
-	global ISANT, NUM, ENEMYCHAR
+	global ISANT, NUM
 	ISANT = isant
 	NUM = numMice
-	if isant: 
-		ENEMYCHAR = 'B'
-	else: 
-		ENEMYCHAR = 'A'
+	# code to run before node even starts
+	print('Hello! I\'m the 1v1 test algorithm!')
+	# initialize other algs
+	attacker_tom.initAlg(isant, numMice, eps=0.4, safety_score=4, manhattan_score=3)
+	#attacker.initAlg(isant, numMice)
 
 def computeMoves(miceMoves, score, miceData, omniMap):
 	# miceMoves - modify this with the moves u wanna do
 	# score - current score, see mouse_control/msg/Score.msg
+
+	# Level 1: Omniscient - available data
+	# omniMap - xy-indexed, see mouse_control/msg/Omniscience.msg (also can print out in god node leakMap)
+
+	# Level 2: Hivemind - available data
+	# omniMap - just use your half and ignore the rest
 	# miceData - telemetry data from each mouse, see mouse_description/msg/MouseData.msg
-	# Ants go to goal and bees tag.
 
 	# First call should not have any flags captured, so can grab flag locations from there
 	# keep in mind these are base locations, need to re-search if flag is stolen
 	if not (myFlag and enemyFlag):
 		computeFlags(omniMap)
 
-	# Level 1: Omnisas pfcient - available data
+	# Compute some moves
+	# keep in mind ants go first, then bees, but tag and point logic doesn't apply until bees are done
+	#roles = [attacker]
+	roles = [attacker_tom]
 	for i in range(NUM):
-		computeMouseMove(i, miceMoves, score, miceData, omniMap, reconMap)
-
-def computeMouseMove(idx, miceMoves, score, miceData, omniMap, reconMap, myFlag, enemyFlag):
-	current_mouse = miceData[idx]
-	mx, my = current_mouse.x, current_mouse.y
-	mang = current_mouse.ang
-	if 'F' in omniMap[mx][my]:
-		nx, ny = myFlag
-	else: 
-		nx, ny = enemyFlag
-	start_state = RobotState(mx, my, mang)
-	flag_state = RobotState(nx, ny, 0)
-	traj = path_finding.djistrka(start_state, flag_state, omniMap, WORLD_HEIGHT, WORLD_WIDTH, path=True, ignore_theta=True)
-	# for (a, s) in traj: print(f"A: {a} s: {s}")
-	miceMoves[idx].type = traj[0][0]
-	# print("Moving Ant: ", miceMoves[i].type)
+		roles[i%len(roles)].computeMouseMove(i, miceMoves, score, miceData, omniMap, reconMap, myFlag, enemyFlag)
