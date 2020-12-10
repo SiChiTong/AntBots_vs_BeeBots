@@ -45,7 +45,7 @@ def initAlg(isant, numMice):
 	# code to run before node even starts
 	print('Hello! I\'m the 1v1 test algorithm!')
 	# initialize other algs
-	attacker_tom.initAlg(isant, numMice, eps=0, safety_score=3, manhattan_score=-1)
+	attacker_tom.initAlg(isant, numMice, eps=0.4, safety_score=4, manhattan_score=3)
 	#attacker.initAlg(isant, numMice)
 
 def computeMoves(miceMoves, score, miceData, omniMap):

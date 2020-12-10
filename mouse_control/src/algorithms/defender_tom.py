@@ -36,14 +36,15 @@ def computeFlags(rmap):
 					myFlag = (x,y)
 
 # standard interface functions
-def initAlg(isant, numMice, random_blocker=True, fixed_blocker=-3):
+def initAlg(isant, numMice, random_blocker=False, fixed_blocker=-3, prob_traj=0.2):
 	# code to run before node even starts
 	print('Hello! I\'m the tagger algorithm!')
-	global ISANT, NUM, ENEMYCHAR, RANDOM_BLOCKER
+	global ISANT, NUM, ENEMYCHAR, RANDOM_BLOCKER, FIXED_BLOCKER, PROB_GET_ENEMY
 	ISANT = isant
 	NUM = numMice
 	RANDOM_BLOCKER = random_blocker
 	FIXED_BLOCKER = fixed_blocker 
+	PROB_GET_ENEMY = prob_traj
 	if isant: 
 		ENEMYCHAR = 'B'
 	else: 
@@ -70,20 +71,21 @@ def computeMouseMove(idx, miceMoves, score, miceData, omniMap, reconMap, myFlag,
 	enemy_state, _ = path_finding.find_closest_enemy(start_state, ENEMYCHAR, omniMap, WORLD_HEIGHT, WORLD_WIDTH)
 	my_flag_state = RobotState(myFlag[0], myFlag[1], 0)
 	enemy_traj = path_finding.djistrka(enemy_state, my_flag_state, omniMap, WORLD_HEIGHT, WORLD_WIDTH, path=True, ignore_theta=True)
-	if RANDOM_BLOCKER: 
-		index = random.randint(0, len(enemy_traj) - 1)
-		enemy_future_state = enemy_traj[index][1]
-		traj = path_finding.djistrka(start_state, enemy_future_state, omniMap, WORLD_HEIGHT, WORLD_WIDTH, path=True, ignore_theta=True)
-	elif -FIXED_BLOCKER <= len(enemy_traj): 
-		enemy_future_state = enemy_traj[FIXED_BLOCKER][1]
-		traj = path_finding.djistrka(start_state, enemy_future_state, omniMap, WORLD_HEIGHT, WORLD_WIDTH, path=True, ignore_theta=True)
+	if random.random() < PROB_GET_ENEMY: 
+		if RANDOM_BLOCKER: 
+			index = random.randint(0, len(enemy_traj) - 1)
+			enemy_future_state = enemy_traj[index][1]
+			traj = path_finding.djistrka(start_state, enemy_future_state, omniMap, WORLD_HEIGHT, WORLD_WIDTH, path=True, ignore_theta=True)
+		elif -FIXED_BLOCKER <= len(enemy_traj): 
+			enemy_future_state = enemy_traj[FIXED_BLOCKER][1]
+			traj = path_finding.djistrka(start_state, enemy_future_state, omniMap, WORLD_HEIGHT, WORLD_WIDTH, path=True, ignore_theta=True)
+		else: 
+			traj = path_finding.djistrka(start_state, enemy_state, omniMap, WORLD_HEIGHT, WORLD_WIDTH, path=True, ignore_theta=True)
 	else: 
 		traj = path_finding.djistrka(start_state, enemy_state, omniMap, WORLD_HEIGHT, WORLD_WIDTH, path=True, ignore_theta=True)
-
+	
 	# for (a, s) in traj: print(f"A: {a} s: {s}")
 	miceMoves[idx].type = traj[0][0]
-	print(f"traj: {traj[0][1]}")
-
 	if not utils.in_my_half(ISANT, WORLD_HEIGHT, traj[0][1]):
 		miceMoves[idx].type = MouseCommand.STOP
 	# print("Moving Bee: ", miceMoves[i].type)
