@@ -84,32 +84,7 @@ def computeMoves(miceMoves, score, miceData, omniMap):
 		computeFlags(omniMap)
 
 	global reconMap
-	# get all the xs, ys, types for every mouse
-	hive_mind = dict()
-	for i in range(NUM):
-		current_mouse = miceData[i]
-		types = current_mouse.types
-		xs = current_mouse.xs
-		ys = current_mouse.ys
-		for j in range(len(types)):
-			x, y = xs[j], ys[j]
-			hive_mind[(x, y)] = types[j]
-
-	# clear the map besides obstacles
-	for x in range(WORLD_WIDTH):
-		for y in range(WORLD_HEIGHT):
-			if reconMap[x][y] != '#':
-				reconMap[x][y] = ' '
-
-	# make a new map with the xs, ys, and types of 'A' and 'B' and 'F' added in
-	for p, t in hive_mind.items():
-		x, y = p
-		reconMap[x][y] = t  
-	
-	# add back the flags
-	reconMap[enemyFlag[0]][enemyFlag[1]] = 'F'
-	reconMap[myFlag[0]][myFlag[1]] = 'F'
-	
+	utils.updateHiveReconMap(reconMap, NUM, WORLD_WIDTH, WORLD_HEIGHT, miceData, enemyFlag, myFlag)
 	orien_symbols = {'0': ">", '1': "^", '2': "<", '3': "v"}
 	for y in reversed(range(WORLD_HEIGHT)):
 		for x in range(WORLD_WIDTH):
@@ -126,7 +101,11 @@ def computeMoves(miceMoves, score, miceData, omniMap):
 	for i in range(NUM):
 		cm = miceData[i]
 		start_state = RobotState(cm.x, cm.y, cm.ang)
-		flag_state = RobotState(enemyFlag[0], enemyFlag[1], 0)
+		if 'F' in reconMap[cm.x][cm.y]:
+			nx, ny = myFlag
+		else: 
+			nx, ny = enemyFlag
+		flag_state = RobotState(nx, ny, 0)
 		traj = path_finding.djistrka(start_state, flag_state, reconMap, WORLD_HEIGHT, WORLD_WIDTH, path=True, ignore_theta=True, debug=False)
 		if len(traj) != 0:
 			miceMoves[i].type = traj[0][0]
