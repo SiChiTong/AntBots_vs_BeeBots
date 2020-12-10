@@ -4,7 +4,7 @@ import math
 
 from mouse_description.msg import MouseCommand
 from . import path_finding
-
+from .robot_state import RobotState
 
 # constants
 WORLD_HEIGHT = rospy.get_param('/WORLD_HEIGHT')
@@ -12,7 +12,7 @@ WORLD_WIDTH = rospy.get_param('/WORLD_WIDTH')
 reconMap = [[' ' for j in range(WORLD_HEIGHT)] for i in range(WORLD_WIDTH)]
 
 # code to run before node even starts
-print('Hello! I\'m the tagger algorithm!')
+print('Hello! I\'m the attacker algorithm!')
 
 # private variables
 myFlag = None
@@ -81,7 +81,8 @@ def computeMouseMove(idx, miceMoves, score, miceData, omniMap, reconMap, myFlag,
 		nx, ny = myFlag
 	else: 
 		nx, ny = enemyFlag
-	traj = path_finding.djistrka(mx, my, mang, nx, ny, ENEMYCHAR, omniMap, WORLD_HEIGHT, WORLD_WIDTH)
+	start_state = RobotState(mx, my, mang)
+	traj = path_finding.djistrka(start_state, nx, ny, ENEMYCHAR, omniMap, WORLD_HEIGHT, WORLD_WIDTH)
 	# for (a, s) in traj: print(f"A: {a} s: {s}")
 	miceMoves[idx].type = traj[0][0]
 	# print("Moving Ant: ", miceMoves[i].type)

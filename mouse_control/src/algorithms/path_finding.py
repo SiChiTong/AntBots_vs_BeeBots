@@ -4,6 +4,7 @@ from collections import defaultdict
 import heapq
 
 from mouse_description.msg import MouseCommand
+from .robot_state import RobotState
 
 # determines path to take based on A* search algorithm
 def astar(sx, sy, ex, ey, reconMap, height, width):
@@ -139,39 +140,17 @@ def get_move(astar_path, mx, my, mang):
         else:
             return MouseCommand.LEFT
 
-class RobotState(object):
-    def __init__(self, x, y, theta):
-        self.x = x
-        self.y = y
-        self.theta = theta
-
-    def __eq__(self, other):
-        return other and self.x == other.x and self.y == other.y and self.theta == other.theta
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-    def __hash__(self): 
-        return hash((self.x, self.y, self.theta))
-
-    def __copy__(self):
-        return RobotState(self.x, self.y, self.theta)
-
-    def __lt__(self, other):
-        return other.x < self.x or other.y < self.y
-
-    def __repr__(self):
-        return f"(x: {self.x}, y: {self.y}, t: {self.theta})"
-
-def djistrka(sx, sy, st, ex, ey, enemy_char, rMap, height, width):
-    start_state = RobotState(sx, sy, st)
+def djistrka(start_state, ex, ey, enemy_char, rMap, height, width, path=True):
     q, visited, cost_map, parent = [(0, start_state)], set(), defaultdict(lambda: float('inf')), {}
     while q:
         (cost, state) = heapq.heappop(q)
         #print(f"Cost: {cost} State: {state}, sx: {sx}, sy: {sy}, ex: {ex}, ey: {ey}, height: {height}, width: {width}")
         if state in visited: continue
         if state.x == ex and state.y == ey:
-            return get_dijstrka_trajectory(start=start_state, end=state, parent=parent)
+            if path: 
+                return get_dijstrka_trajectory(start=start_state, end=state, parent=parent)
+            else: 
+                return cost
         visited.add(state)
         for (action, neighbor) in get_valid_neighbors(state, enemy_char, rMap, height, width):
             if neighbor in visited: continue 
