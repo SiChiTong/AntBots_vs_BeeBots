@@ -5,6 +5,8 @@ import numpy as np
 from mouse_description.msg import MouseCommand
 from . import path_finding
 import copy
+from . import utils
+from .robot_state import RobotState
 
 # constants
 WORLD_HEIGHT = rospy.get_param('/WORLD_HEIGHT')
@@ -43,9 +45,13 @@ def computeFlags(rmap):
 
 # standard interface functions
 def initAlg(isant, numMice):
-	global ISANT, NUM, lastxs, lastys, currentxs, currentys
+	global ISANT, NUM, ENEMYCHAR, lastxs, lastys, currentxs, currentys
 	ISANT = isant
 	NUM = numMice
+	if ISANT: 
+		ENEMYCHAR = 'B'
+	else: 
+		ENEMYCHAR = 'A'
 
 	#listxs = [-1 for a in range(NUM)]
 	#listys = [-1 for b in range(NUM)]
@@ -78,163 +84,38 @@ def computeMoves(miceMoves, score, miceData, omniMap):
 
 	global reconMap
 
-	# Compute some moves
-	if ISANT:
-		for i in range(NUM):
-			current_mouse = miceData[i]
-			mx, my = current_mouse.x, current_mouse.y
-			mang = current_mouse.ang
-			
-			types = current_mouse.types
-			xs = current_mouse.xs
-			ys = current_mouse.ys
+	# # Compute some moves
+	# if ISANT:
 	
-			# init current x and y
-			currentxs[i] = mx
-			currentys[i] = my
+	# get all the xs, ys, types for every mouse
+	hive_mind = dict()
+	for i in range(NUM):
+		current_mouse = miceData[i]
+		types = current_mouse.types
+		xs = current_mouse.xs
+		ys = current_mouse.ys
+		for j in range(len(types)):
+			x, y = xs[j], ys[j]
+			hive_mind[(x, y)] = types[j]
+	# clear the map besides obstacles
+	for x in range(WORLD_WIDTH):
+		for y in range(WORLD_HEIGHT):
+			if reconMap[x][y] != '#':
+				reconMap[x][y] = ' '
 
-			# created an updated recon map with radius information here:
-			updatedReconMap = copy.deepcopy(reconMap)
-
-			# update map with all vision
-			for j in range(len(types)):
-				newx, newy = xs[j], ys[j]	
-				updatedReconMap[newx][newy] = types[j]
-
-			# delete old one
-			#print(lastxs[i])
-			#print(currentxs[i])
-			#print(lastys[i])
-			#print(currentys[i])
-			if lastxs[i] != -1 and lastys[i] != -1:
-				if currentxs[i] != lastxs[i] or currentys[i] != lastys[i]:
-					print("HIT")
-					updatedReconMap[lastxs[i]][lastys[i]] = ' '
-
-			lastxs[i] = currentxs[i]
-			lastys[i] = currentys[i]
-
-			reconMap = updatedReconMap
-
-			print(updatedReconMap)
-
-			if 'AF' in reconMap[mx][my]:
-				# HAS FLAG
-				print("ANT GOING HOME!")
-				close_list = path_finding.astar(mx, my, myFlag[0], myFlag[1], reconMap, WORLD_HEIGHT, WORLD_WIDTH)
-			else:
-				# DOES NOT HAVE FLAG
-				print("ANT GOING IN!")
-				close_list = path_finding.astar(mx, my, enemyFlag[0], enemyFlag[1], reconMap, WORLD_HEIGHT, WORLD_WIDTH)
-						
-			nextx, nexty = 0, 0
-
-			for close_node in close_list:
-				if close_node[4] == mx and close_node[5] == my:
-					nextx = close_node[0] - mx
-					nexty = close_node[1] - my
-
-			if (nextx == 1):
-				#go EAST
-				if mang == 0:
-					miceMoves[i].type = MouseCommand.FORWARD
-				else:
-					miceMoves[i].type = MouseCommand.LEFT
-			elif (nextx == -1):
-				#go WEST
-				if mang == 2:
-					miceMoves[i].type = MouseCommand.FORWARD
-				else:
-					miceMoves[i].type = MouseCommand.LEFT
-			elif (nexty == 1):
-				#go NORTH
-				if mang == 1:
-					miceMoves[i].type = MouseCommand.FORWARD
-				else:
-					miceMoves[i].type = MouseCommand.LEFT
-			elif (nexty == -1):
-				#go SOUTH
-				if mang == 3:
-					miceMoves[i].type = MouseCommand.FORWARD
-				else:
-					miceMoves[i].type = MouseCommand.LEFT
-	else:
-		for i in range(NUM):
-			current_mouse = miceData[i]
-			mx, my = current_mouse.x, current_mouse.y
-			mang = current_mouse.ang
-
-			types = current_mouse.types
-			xs = current_mouse.xs
-			ys = current_mouse.ys
-			
-			# init current x and y
-			currentxs[i] = mx
-			currentys[i] = my
-
-			# created an updated recon map with radius information here:
-			updatedReconMap = copy.deepcopy(reconMap)
-
-			# update map with all vision
-			for j in range(len(types)):
-				newx, newy = xs[j], ys[j]	
-				updatedReconMap[newx][newy] = types[j]
-
-			# delete old one
-			#print(lastxs[i])
-			#print(currentxs[i])
-			#print(lastys[i])
-			#print(currentys[i])
-			if lastxs[i] != -1 and lastys[i] != -1:
-				if currentxs[i] != lastxs[i] or currentys[i] != lastys[i]:
-					updatedReconMap[lastxs[i]][lastys[i]] = ' '
-
-			lastxs[i] = currentxs[i]
-			lastys[i] = currentys[i]
-
-			reconMap = updatedReconMap
-
-			print(updatedReconMap)
-
-			if 'BF' in reconMap[mx][my]:
-				# HAS FLAG
-				print("BEE GOING HOME!")
-				close_list = path_finding.astar(mx, my, myFlag[0], myFlag[1], reconMap, WORLD_HEIGHT, WORLD_WIDTH)
-			else:
-				# DOES NOT HAVE FLAG
-				print("BEE GOING IN!")
-				close_list = path_finding.astar(mx, my, enemyFlag[0], enemyFlag[1], reconMap, WORLD_HEIGHT, WORLD_WIDTH)
-							
-			nextx, nexty = 0, 0
-
-			for close_node in close_list:
-				if close_node[4] == mx and close_node[5] == my:
-					nextx = close_node[0] - mx
-					nexty = close_node[1] - my
-
-			if (nextx == 1):
-				#go EAST
-				if mang == 0:
-					miceMoves[i].type = MouseCommand.FORWARD
-				else:
-					miceMoves[i].type = MouseCommand.LEFT
-			elif (nextx == -1):
-				#go WEST
-				if mang == 2:
-					miceMoves[i].type = MouseCommand.FORWARD
-				else:
-					miceMoves[i].type = MouseCommand.LEFT
-			elif (nexty == 1):
-				#go NORTH
-				if mang == 1:
-					miceMoves[i].type = MouseCommand.FORWARD
-				else:
-					miceMoves[i].type = MouseCommand.LEFT
-			elif (nexty == -1):
-				#go SOUTH
-				if mang == 3:
-					miceMoves[i].type = MouseCommand.FORWARD
-				else:
-					miceMoves[i].type = MouseCommand.LEFT
-
-	#reconMap = updatedReconMap
+	# make a new map with the xs, ys, and types of 'A' and 'B' and 'F' added in
+	for p, t in hive_mind.items():
+		x, y = p
+		reconMap[x][y] = t  
+	reconMap[enemyFlag[0]][enemyFlag[1]] = 'F'
+	reconMap[myFlag[0]][myFlag[1]] = 'F'
+	print(reconMap)
+	# run dijstrka
+	for i in range(NUM):
+		cm = miceData[i]
+		start_state = RobotState(cm.x, cm.y, cm.ang)
+		flag_state = RobotState(enemyFlag[0], enemyFlag[1], 0)
+		print(f'start state {start_state} end state {flag_state}')
+		traj = path_finding.djistrka(start_state, flag_state, reconMap, WORLD_HEIGHT, WORLD_WIDTH, path=True, ignore_theta=True, debug=True)
+		miceMoves[i].type = traj[0][0]
+	

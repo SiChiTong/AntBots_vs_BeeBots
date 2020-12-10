@@ -218,6 +218,7 @@ LAMBDA_FALSE = lambda x: False
 
 def get_valid_neighbors(state, rMap, height, width, special_valid_cond=LAMBDA_FALSE):
     def is_valid_forward_state(state):
+        print(f"state: {state}, height: {height}, width: {width}")
         sc = rMap[state.x][state.y]
         return 0 <= state.x < width and 0 <= state.y < height \
             and (' ' == sc or 'F' == sc or special_valid_cond(state))
