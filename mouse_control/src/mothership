@@ -16,16 +16,9 @@ from mouse_control.msg import Score
 # Level 1: Total Omniscience
 from mouse_control.msg import Omniscience
 
-
-# Choose an awareness level here:
-# LEVEL 1 == omnipotence
-# LEVEL 2 == hivemind
-
-
 WORLD_HEIGHT = rospy.get_param('/WORLD_HEIGHT')
 WORLD_WIDTH = rospy.get_param('/WORLD_WIDTH')
 reconMap = [[' ' for j in range(WORLD_HEIGHT)] for i in range(WORLD_WIDTH)]
-LEVEL = 1
 
 def omniCallback(data):
 	for x in range(WORLD_WIDTH):
@@ -33,14 +26,6 @@ def omniCallback(data):
 			reconMap[x][y] = ' '
 	for t, x, y in zip(data.type, data.x, data.y):
 		reconMap[x][y] = t
-
-def hiveCallback(data):
-	for x in range(WORLD_WIDTH):
-		for y in range(WORLD_HEIGHT):
-			reconMap[x][y] = ' '
-	for t, x, y in zip(data.type, data.x, data.y):
-		if reconMap[x][y] == '#' or reconMap[x][y] == 'F':
-			reconMap[x][y] = t
 
 # Comms
 def mouseCallback(data, num):
@@ -114,8 +99,6 @@ def main():
 	# Level 1: Total Omniscience
 	rospy.Subscriber('/omniscience', Omniscience, omniCallback)
 	
-	hiveCallback()
-	
 	r = rospy.Rate(30)
 	while not rospy.is_shutdown():
 		if score.gameOver:
@@ -134,17 +117,7 @@ def main():
 						miceMoves[i].type = usercmd.type[i]
 					uservalid = False
 				else:
-					if LEVEL == 1:
-						# omnipotence activated
-						print("omni")
-						print(reconMap)
-						computeMoves(miceMoves, score, miceData, reconMap)
-					elif LEVEL == 2:
-						# hivemind activated
-						updatedReconMap = computeMoves(miceMoves, score, miceData, reconMap)
-
-						# update reconMap with newest instance from last bot
-						reconMap = updatedReconMap
+					computeMoves(miceMoves, score, miceData, reconMap)
 
 				msg = GodMail()
 				msg.type = GodMail.COMPUTED
@@ -175,9 +148,9 @@ if __name__ == '__main__':
 
 	# Choose algorithm here!
 	if ISANT:
-		from algorithms.naive_astar import initAlg, computeMoves
+		from algorithms.blind_astar import initAlg, computeMoves
 	else:
-		from algorithms.naive_astar import initAlg, computeMoves
+		from algorithms.blind_astar import initAlg, computeMoves
 
 	try:
 		main()
