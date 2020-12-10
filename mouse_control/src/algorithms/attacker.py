@@ -63,15 +63,20 @@ def computeMoves(miceMoves, score, miceData, reconMap):
 	# miceData - telemetry data from each mouse, see mouse_description/msg/MouseData.msg
 	# Ants go to goal and bees tag.
 
+	# First call should not have any flags captured, so can grab flag locations from there
+	# keep in mind these are base locations, need to re-search if flag is stolen
+	if not (myFlag and enemyFlag):
+		computeFlags(reconMap)
+
 	# Level 1: Omnisas pfcient - available data
 	for i in range(NUM):
 		current_mouse = miceData[i]
 		mx, my = current_mouse.x, current_mouse.y
 		mang = current_mouse.ang
-        if current_mouse.hasFlag:
-            nx, ny = myFlag
-        else: 
-            nx, ny = enemyFlag
+		if 'F' in reconMap[mx][my]:
+			nx, ny = myFlag
+		else: 
+			nx, ny = enemyFlag
 		traj = path_finding.djistrka(mx, my, mang, nx, ny, ENEMYCHAR, reconMap, WORLD_HEIGHT, WORLD_WIDTH)
 		for (a, s) in traj: print(f"A: {a} s: {s}")
 		miceMoves[i].type = traj[0][0]

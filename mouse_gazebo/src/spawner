@@ -55,13 +55,13 @@ if __name__ == '__main__':
 	rospy.loginfo('Spawning ants...')
 	rospy.set_param('NUM_ANTS', len(antPos))
 	for i, pos in enumerate(antPos):
-		start_node('mouse_description', 'sensor', 'sensor', f'ants/ant{i}')
+		# start_node('mouse_description', 'sensor', 'sensor', f'ants/ant{i}')
 		start_node('mouse_description', 'brain', 'brain', f'ants/ant{i}', f'-x {pos[0]} -y {pos[1]} -a {1}')
 
 	rospy.loginfo('Spawning bees...')
 	rospy.set_param('NUM_BEES', len(beePos))
 	for i, pos in enumerate(beePos):
-		start_node('mouse_description', 'sensor', 'sensor', f'bees/bee{i}')
+		# start_node('mouse_description', 'sensor', 'sensor', f'bees/bee{i}')
 		start_node('mouse_description', 'brain', 'brain', f'bees/bee{i}', f'-x {pos[0]} -y {pos[1]} -a {3}')
 
 	rospy.loginfo('Spawning the Insect God...')

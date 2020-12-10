@@ -22,6 +22,7 @@ def astar(sx, sy, ex, ey, reconMap, height, width):
     g_array[sx][sy] = 0
     h_array[sx][sy] = 0
     
+	# OPEN_NODE = (x, y, F, G, parentx, parenty)
     open_list.append((sx, sy, 0, 0, -1, -1))
     
     while open_list:

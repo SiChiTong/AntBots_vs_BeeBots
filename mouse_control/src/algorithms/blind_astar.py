@@ -3,17 +3,21 @@ import rospy
 
 from mouse_description.msg import MouseCommand
 from . import path_finding
+import copy
 
 # constants
 WORLD_HEIGHT = rospy.get_param('/WORLD_HEIGHT')
 WORLD_WIDTH = rospy.get_param('/WORLD_WIDTH')
 
 # code to run before node even starts
-print('Hello! I\'m the naive A* algorithm!')
+print('Hello! I\'m the blind A* algorithm!')
 
 # private variables
 myFlag = None
 enemyFlag = None
+reconMap = [[' ' for j in range(WORLD_HEIGHT)] for i in range(WORLD_WIDTH)]
+
+# Level 1: Total Omniscience
 
 # helpers
 def computeFlags(rmap):
@@ -39,26 +43,42 @@ def initAlg(isant, numMice):
 	ISANT = isant
 	NUM = numMice
 
-def computeMoves(miceMoves, score, miceData, reconMap):
+def computeMoves(miceMoves, score, miceData, omniMap):
 	# miceMoves - modify this with the moves u wanna do
 	# score - current score, see mouse_control/msg/Score.msg
 	# miceData - telemetry data from each mouse, see mouse_description/msg/MouseData.msg
 	# TODO add sensor data from each mouse to do level 2 knowledge
 
-	# Level 1: Omnisas pfcient - available data
-	# reconMap - xy-indexed, see mouse_control/msg/Omniscience.msg (also can print out in god node leakMap)
+	# Level 2: Hivemind - available data
+	# reconMap - xy-indexed, see mouse_control/msg/Omniscience.msg, only has already seen nodes from all bots
 
 	# First call should not have any flags captured, so can grab flag locations from there
 	# keep in mind these are base locations, need to re-search if flag is stolen
 	if not (myFlag and enemyFlag):
-		computeFlags(reconMap)
+		computeFlags(omniMap)
+
+	global reconMap
+
 	# Compute some moves
 	if ISANT:
 		for i in range(NUM):
 			current_mouse = miceData[i]
 			mx, my = current_mouse.x, current_mouse.y
 			mang = current_mouse.ang
-			print(reconMap[mx][my])
+			
+			types = current_mouse.types
+			xs = current_mouse.xs
+			ys = current_mouse.ys
+
+			# created an updated recon map with radius information here:
+			updatedReconMap = copy.deepcopy(reconMap)
+
+			for i in range(len(types)):
+				newx, newy = xs[i], ys[i]
+				updatedReconMap[newx][newy] = types[i]
+
+			reconMap = updatedReconMap
+
 			if 'AF' in reconMap[mx][my]:
 				# HAS FLAG
 				close_list = path_finding.astar(mx, my, myFlag[0], myFlag[1], reconMap, WORLD_HEIGHT, WORLD_WIDTH)
@@ -101,14 +121,28 @@ def computeMoves(miceMoves, score, miceData, reconMap):
 		for i in range(NUM):
 			current_mouse = miceData[i]
 			mx, my = current_mouse.x, current_mouse.y
-			macomputeMovesng = current_mouse.ang
+			mang = current_mouse.ang
+
+			types = current_mouse.types
+			xs = current_mouse.xs
+			ys = current_mouse.ys
+			
+			# created an updated recon map with radius information here:
+			updatedReconMap = copy.deepcopy(reconMap)
+
+			for i in range(len(types)):
+				newx, newy = xs[i], ys[i]
+				updatedReconMap[newx][newy] = types[i]
+
+			reconMap = updatedReconMap		
 
 			if 'BF' in reconMap[mx][my]:
+				# HAS FLAG
 				close_list = path_finding.astar(mx, my, myFlag[0], myFlag[1], reconMap, WORLD_HEIGHT, WORLD_WIDTH)
 			else:
-				# DOES NOT HAVE MAP
+				# DOES NOT HAVE FLAG
 				close_list = path_finding.astar(mx, my, enemyFlag[0], enemyFlag[1], reconMap, WORLD_HEIGHT, WORLD_WIDTH)
-						
+							
 			nextx, nexty = 0, 0
 
 			for close_node in close_list:
@@ -140,4 +174,5 @@ def computeMoves(miceMoves, score, miceData, reconMap):
 					miceMoves[i].type = MouseCommand.FORWARD
 				else:
 					miceMoves[i].type = MouseCommand.LEFT
-	
+
+	reconMap = updatedReconMap

@@ -98,7 +98,7 @@ def main():
 
 	# Level 1: Total Omniscience
 	rospy.Subscriber('/omniscience', Omniscience, omniCallback)
-
+	
 	r = rospy.Rate(30)
 	while not rospy.is_shutdown():
 		if score.gameOver:
