@@ -188,12 +188,15 @@ def move_away_from_enemy(start_state, enemy_state, rMap, height, width, old_acti
         if action == 3: continue
         new_dcost = djistrka(enemy_state, state, rMap, height, width, path=False, ignore_theta=False)
         new_mcost = manhattan_dist(enemy_state, state)
-        #print(f"new dcost: {new_dcost}, new_mcost: {new_mcost}, action: {action}, state: {state}, enemy_state: {enemy_state}, start_state: {start_state}")
+        print(f"new dcost: {new_dcost}, new_mcost: {new_mcost}, action: {action}, state: {state}, enemy_state: {enemy_state}, start_state: {start_state}")
         if best_dcost < new_dcost or (new_dcost == best_dcost and best_mcost < new_mcost): 
             best_dcost = new_dcost
             best_mcost = new_mcost
             best_action = action 
-    #print(f"move away action: {best_action}")
+        if best_dcost == new_dcost and new_dcost == best_dcost and action == old_action:
+            best_action = action
+
+    print(f"move away action: {best_action}")
     return best_action, best_dcost, best_mcost
 
 def get_dijstrka_trajectory(start, end, parent):

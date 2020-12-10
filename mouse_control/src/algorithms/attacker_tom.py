@@ -81,10 +81,10 @@ def computeMouseMove(idx, miceMoves, score, miceData, omniMap, reconMap, myFlag,
 		traj = path_finding.djistrka(start_state, flag_state, omniMap, WORLD_HEIGHT, WORLD_WIDTH, path=True, ignore_theta=True)
 		enemy_state, djistrka_dist = path_finding.find_closest_enemy(start_state, ENEMYCHAR, omniMap, WORLD_HEIGHT, WORLD_WIDTH)
 		man_dist = path_finding.manhattan_dist(start_state, enemy_state)
-		#print(f"Djistrka distance: {djistrka_dist} Manhattan distance: {man_dist} enemy: {enemy_state}, start: {start_state} ")	
+		print(f"Djistrka distance: {djistrka_dist} Manhattan distance: {man_dist} enemy: {enemy_state}, start: {start_state} ")	
 		if djistrka_dist <= SAFETY_SCORE or man_dist <= MANHATTAN_SCORE: 
 			miceMoves[idx].type, _, _ = path_finding.move_away_from_enemy(start_state, enemy_state, omniMap, WORLD_HEIGHT, WORLD_WIDTH, traj[0][0])
-			#print("SELECTING SAFETY MOVE")
+			print("SELECTING SAFETY MOVE")
 		else: 
 			miceMoves[idx].type = traj[0][0]
 	# print("Moving Ant: ", miceMoves[i].type)
