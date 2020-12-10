@@ -5,7 +5,7 @@ from mouse_description.msg import MouseCommand
 
 # Import other algorithms
 import algorithms.template as template
-import algorithms.tagger as tagger
+import algorithms.defender as defender
 import algorithms.defender_tom as defender_tom
 
 # constants
@@ -64,7 +64,7 @@ def computeMoves(miceMoves, score, miceData, omniMap):
 
 	# Compute some moves
 	# keep in mind ants go first, then bees, but tag and point logic doesn't apply until bees are done
-	roles = [defender_tom]
+	roles = [defender_tom, defender_tom]
 
 	for i in range(NUM):
 		roles[i%len(roles)].computeMouseMove(i, miceMoves, score, miceData, omniMap, reconMap, myFlag, enemyFlag)
