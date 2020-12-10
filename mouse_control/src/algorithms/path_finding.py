@@ -100,11 +100,11 @@ def cantor_pairing(x, y):
 # determines whether (x, y) tuple is legal: not OOB and not a wall
 def isValid(tuple, reconMap):
     x, y = tuple[0], tuple[1]
-    if reconMap[x][y] == '#':
+    if 'F' in reconMap[x][y]:
+        return True
+    if 'A' in reconMap[x][y]:
         return False
-    if reconMap[x][y] == 'A':
-        return False
-    if reconMap[x][y] == 'B':
+    if 'B' in reconMap[x][y]:
         return False
     return True
 
