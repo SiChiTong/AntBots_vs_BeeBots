@@ -7,13 +7,12 @@ from mouse_description.msg import MouseCommand
 import algorithms.template as template
 import algorithms.tagger as tagger
 import algorithms.attacker_tom as attacker_tom
+import algorithms.attacker as attacker
 
 # constants
 WORLD_HEIGHT = rospy.get_param('/WORLD_HEIGHT')
 WORLD_WIDTH = rospy.get_param('/WORLD_WIDTH')
 
-# code to run before node even starts
-print('Hello! I\'m the 1v1 test algorithm!')
 
 # private variables
 myFlag = None
@@ -43,9 +42,11 @@ def initAlg(isant, numMice):
 	global ISANT, NUM
 	ISANT = isant
 	NUM = numMice
-
+	# code to run before node even starts
+	print('Hello! I\'m the 1v1 test algorithm!')
 	# initialize other algs
-	attacker_tom.initAlg(isant, numMice, eps=0.25)
+	#attacker_tom.initAlg(isant, numMice, eps=0.25)
+	attacker.initAlg(isant, numMice)
 
 def computeMoves(miceMoves, score, miceData, omniMap):
 	# miceMoves - modify this with the moves u wanna do
@@ -65,6 +66,6 @@ def computeMoves(miceMoves, score, miceData, omniMap):
 
 	# Compute some moves
 	# keep in mind ants go first, then bees, but tag and point logic doesn't apply until bees are done
-	roles = [attacker_tom]
+	roles = [attacker]
 	for i in range(NUM):
 		roles[i%len(roles)].computeMouseMove(i, miceMoves, score, miceData, omniMap, reconMap, myFlag, enemyFlag)

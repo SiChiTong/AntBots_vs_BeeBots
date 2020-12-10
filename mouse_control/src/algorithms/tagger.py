@@ -4,15 +4,12 @@ import math
 
 from mouse_description.msg import MouseCommand
 from . import path_finding
-
+from .robot_state import RobotState
 
 # constants
 WORLD_HEIGHT = rospy.get_param('/WORLD_HEIGHT')
 WORLD_WIDTH = rospy.get_param('/WORLD_WIDTH')
 reconMap = [[' ' for j in range(WORLD_HEIGHT)] for i in range(WORLD_WIDTH)]
-
-# code to run before node even starts
-print('Hello! I\'m the tagger algorithm!')
 
 # private variables
 myFlag = None
@@ -38,6 +35,8 @@ def computeFlags(rmap):
 
 # standard interface functions
 def initAlg(isant, numMice):
+	# code to run before node even starts
+	print('Hello! I\'m the tagger algorithm!')
 	global ISANT, NUM, ENEMYCHAR
 	ISANT = isant
 	NUM = numMice
@@ -45,19 +44,7 @@ def initAlg(isant, numMice):
 		ENEMYCHAR = 'B'
 	else: 
 		ENEMYCHAR = 'A'
-
-def getClosestEnemyInRmap(sx, sy, rmap):	
-	closestEnemyX, closestEnemyY, closestEnemyManhattanDist = -1,  -1, math.inf
-	for x in range(WORLD_WIDTH):
-		for y in range(WORLD_HEIGHT):
-			manhattanDist = path_finding.manhattan(sx, sy, x, y)
-			if ENEMYCHAR in rmap[x][y] and manhattanDist < closestEnemyManhattanDist:
-				closestEnemyManhattanDist = manhattanDist
-				closestEnemyX = x
-				closestEnemyY = y
-	return closestEnemyX, closestEnemyY, closestEnemyManhattanDist
 	
-
 def computeMoves(miceMoves, score, miceData, omniMap):
 	# miceMoves - modify this with the moves u wanna do
 	# score - current score, see mouse_control/msg/Score.msg
@@ -75,10 +62,9 @@ def computeMouseMove(idx, miceMoves, score, miceData, omniMap, reconMap, myFlag,
 	current_mouse = miceData[idx]
 	mx, my = current_mouse.x, current_mouse.y
 	mang = current_mouse.ang
-	enemy_x, enemy_y, enemy_dist = getClosestEnemyInRmap(mx, my, omniMap)
-	assert enemy_x != -1 and enemy_y != -1 
 	start_state = RobotState(mx, my, mang)
-	traj = path_finding.djistrka(start_state, enemy_x, enemy_y, ENEMYCHAR, omniMap, WORLD_HEIGHT, WORLD_WIDTH)
+	enemy_state, _ = path_finding.find_closest_enemy(start_state, ENEMYCHAR, omniMap, WORLD_HEIGHT, WORLD_WIDTH)
+	traj = path_finding.djistrka(start_state, enemy_state, omniMap, WORLD_HEIGHT, WORLD_WIDTH, path=True, ignore_theta=True)
 	# for (a, s) in traj: print(f"A: {a} s: {s}")
 	miceMoves[idx].type = traj[0][0]
 	# print("Moving Bee: ", miceMoves[i].type)

@@ -2,6 +2,7 @@
 import copy 
 from collections import defaultdict
 import heapq
+import random
 
 from mouse_description.msg import MouseCommand
 from .robot_state import RobotState
@@ -140,19 +141,21 @@ def get_move(astar_path, mx, my, mang):
         else:
             return MouseCommand.LEFT
 
-def djistrka(start_state, ex, ey, enemy_char, rMap, height, width, path=True):
+def djistrka(start_state, end_state, rMap, height, width, path=True, ignore_theta=True, debug=False):
     q, visited, cost_map, parent = [(0, start_state)], set(), defaultdict(lambda: float('inf')), {}
+    special_valid_cond = get_valid_goal_lambda(end_state)
     while q:
         (cost, state) = heapq.heappop(q)
-        #print(f"Cost: {cost} State: {state}, sx: {sx}, sy: {sy}, ex: {ex}, ey: {ey}, height: {height}, width: {width}")
+        if debug:
+            print(f"Cost: {cost} State: {state}, start: {start_state}, end: {end_state}, height: {height}, width: {width}")
         if state in visited: continue
-        if state.x == ex and state.y == ey:
+        if state.x == end_state.x and state.y == end_state.y and (ignore_theta or state.theta == end_state.theta):
             if path: 
                 return get_dijstrka_trajectory(start=start_state, end=state, parent=parent)
             else: 
                 return cost
         visited.add(state)
-        for (action, neighbor) in get_valid_neighbors(state, enemy_char, rMap, height, width):
+        for (action, neighbor) in get_valid_neighbors(state, rMap, height, width, special_valid_cond=special_valid_cond):
             if neighbor in visited: continue 
             prev_cost = cost_map[neighbor]
             new_cost = cost + 1
@@ -161,6 +164,29 @@ def djistrka(start_state, ex, ey, enemy_char, rMap, height, width, path=True):
                 parent[neighbor] = (action, state)
                 heapq.heappush(q, (new_cost, neighbor))
     return None 
+
+def find_closest_enemy(start_state, enemyChar, rMap, height, width):
+    closest_enemy, nearest_distance = None, float('inf')
+    for x in range(width):
+        for y in range(height):
+            if enemyChar in rMap[x][y]:
+                et = int(rMap[x][y][0])
+                enemy_state = RobotState(x, y, et)
+                cost = djistrka(enemy_state, start_state, rMap, height, width, path=False, ignore_theta=True, debug=False)
+                if cost is not None and cost < nearest_distance:
+                    nearest_distance = cost 
+                    closest_enemy = enemy_state
+    assert(closest_enemy is not None)
+    return closest_enemy, nearest_distance
+
+def move_away_from_enemy(start_state, enemy_state, rMap, height, width):
+    best_action, cost = 3, -float('inf')
+    for (action, state) in get_valid_neighbors(start_state, rMap, height, width):
+        new_cost = djistrka(enemy_state, state, rMap, height, width, path=False, ignore_theta=False)
+        if new_cost > cost: 
+            cost = new_cost
+            best_action = action 
+    return best_action, cost
 
 def get_dijstrka_trajectory(start, end, parent):
     action, state, trajectory = None, end, []
@@ -171,12 +197,19 @@ def get_dijstrka_trajectory(start, end, parent):
     #for (a, s) in trajectory: print(f"Original A: {a} s: {s}")
     return list(reversed(trajectory))
 
+def get_valid_goal_lambda(g):
+    return lambda s: s.x == g.x and s.y == g.y
 
-def get_valid_neighbors(state, enemy_char, rMap, height, width):
+def get_valid_goal_state_lambda(g):
+    return lambda s: g == s
+
+LAMBDA_FALSE = lambda x: False
+
+def get_valid_neighbors(state, rMap, height, width, special_valid_cond=LAMBDA_FALSE):
     def is_valid_forward_state(state):
         sc = rMap[state.x][state.y]
         return 0 <= state.x < width and 0 <= state.y < height \
-            and (' ' == sc or 'F' == sc or enemy_char in sc)
+            and (' ' == sc or 'F' == sc or special_valid_cond(state))
 
     actions = [MouseCommand.LEFT, MouseCommand.RIGHT, MouseCommand.FORWARD, MouseCommand.STOP]    
     neighbors = []

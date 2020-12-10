@@ -11,9 +11,6 @@ WORLD_HEIGHT = rospy.get_param('/WORLD_HEIGHT')
 WORLD_WIDTH = rospy.get_param('/WORLD_WIDTH')
 reconMap = [[' ' for j in range(WORLD_HEIGHT)] for i in range(WORLD_WIDTH)]
 
-# code to run before node even starts
-print('Hello! I\'m the attacker algorithm!')
-
 # private variables
 myFlag = None
 enemyFlag = None
@@ -38,6 +35,7 @@ def computeFlags(rmap):
 
 # standard interface functions
 def initAlg(isant, numMice):
+	print('Hello! I\'m the attacker algorithm!')
 	global ISANT, NUM, ENEMYCHAR
 	ISANT = isant
 	NUM = numMice
@@ -45,18 +43,6 @@ def initAlg(isant, numMice):
 		ENEMYCHAR = 'B'
 	else: 
 		ENEMYCHAR = 'A'
-
-def getClosestEnemyInRmap(sx, sy, rmap):	
-	closestEnemyX, closestEnemyY, closestEnemyManhattanDist = -1,  -1, math.inf
-	for x in range(WORLD_WIDTH):
-		for y in range(WORLD_HEIGHT):
-			manhattanDist = path_finding.manhattan(sx, sy, x, y)
-			if ENEMYCHAR in rmap[x][y] and manhattanDist < closestEnemyManhattanDist:
-				closestEnemyManhattanDist = manhattanDist
-				closestEnemyX = x
-				closestEnemyY = y
-	return closestEnemyX, closestEnemyY, closestEnemyManhattanDist
-	
 
 def computeMoves(miceMoves, score, miceData, omniMap):
 	# miceMoves - modify this with the moves u wanna do
@@ -82,7 +68,8 @@ def computeMouseMove(idx, miceMoves, score, miceData, omniMap, reconMap, myFlag,
 	else: 
 		nx, ny = enemyFlag
 	start_state = RobotState(mx, my, mang)
-	traj = path_finding.djistrka(start_state, nx, ny, ENEMYCHAR, omniMap, WORLD_HEIGHT, WORLD_WIDTH)
+	flag_state = RobotState(nx, ny, 0)
+	traj = path_finding.djistrka(start_state, flag_state, omniMap, WORLD_HEIGHT, WORLD_WIDTH, path=True, ignore_theta=True)
 	# for (a, s) in traj: print(f"A: {a} s: {s}")
 	miceMoves[idx].type = traj[0][0]
 	# print("Moving Ant: ", miceMoves[i].type)
