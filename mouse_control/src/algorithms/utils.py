@@ -42,3 +42,16 @@ def updateHiveReconMap(reconMap, NUM, WORLD_WIDTH, WORLD_HEIGHT, miceData, enemy
 	# add back the flags
 	reconMap[enemyFlag[0]][enemyFlag[1]] = 'F'
 	reconMap[myFlag[0]][myFlag[1]] = 'F'
+
+def leakMap(reconMap, WORLD_HEIGHT, WORLD_WIDTH):
+	orien_symbols = {'0': ">", '1': "^", '2': "<", '3': "v"}
+	for y in reversed(range(WORLD_HEIGHT)):
+		for x in range(WORLD_WIDTH):
+			r = reconMap[x][y]
+			if 'B' in r or 'A' in r:
+				angle = r[0]
+				a = orien_symbols[angle] + r[1:]
+			else: 
+				a = r
+			print(f'{a:^5}', end="")
+		print()

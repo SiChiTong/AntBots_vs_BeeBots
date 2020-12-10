@@ -54,6 +54,7 @@ def initAlg(isant, numMice):
 	else: 
 		ENEMYCHAR = 'A'
 
+
 def computeMoves(miceMoves, score, miceData, omniMap):
 	# miceMoves - modify this with the moves u wanna do
 	# score - current score, see mouse_control/msg/Score.msg

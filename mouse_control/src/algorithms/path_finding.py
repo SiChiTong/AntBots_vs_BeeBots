@@ -176,7 +176,6 @@ def find_closest_enemy(start_state, enemyChar, rMap, height, width):
                 if cost is not None and cost < nearest_distance:
                     nearest_distance = cost 
                     closest_enemy = enemy_state
-    assert(closest_enemy is not None)
     return closest_enemy, nearest_distance
 
 def manhattan_dist(s1, s2):
