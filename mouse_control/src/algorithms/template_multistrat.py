@@ -3,12 +3,17 @@ import rospy
 
 from mouse_description.msg import MouseCommand
 
+# Import other algorithms
+import algorithms.template as template
+import algorithms.tagger as tagger
+import algorithms.attacker as attacker
+
 # constants
 WORLD_HEIGHT = rospy.get_param('/WORLD_HEIGHT')
 WORLD_WIDTH = rospy.get_param('/WORLD_WIDTH')
 
 # code to run before node even starts
-print('Hello! I\'m the template algorithm!')
+print('Hello! I\'m the template multistrat algorithm!')
 
 # private variables
 myFlag = None
@@ -39,6 +44,11 @@ def initAlg(isant, numMice):
 	ISANT = isant
 	NUM = numMice
 
+	# initialize other algs
+	template.initAlg(isant, numMice)
+	tagger.initAlg(isant, numMice)
+	attacker.initAlg(isant, numMice)
+
 def computeMoves(miceMoves, score, miceData, omniMap):
 	# miceMoves - modify this with the moves u wanna do
 	# score - current score, see mouse_control/msg/Score.msg
@@ -57,23 +67,7 @@ def computeMoves(miceMoves, score, miceData, omniMap):
 
 	# Compute some moves
 	# keep in mind ants go first, then bees, but tag and point logic doesn't apply until bees are done
+	roles = [tagger, attacker, template]
+
 	for i in range(NUM):
-		computeMouseMove(i, miceMoves, score, miceData, omniMap, reconMap, myFlag, enemyFlag)
-
-def computeMouseMove(idx, miceMoves, score, miceData, omniMap, reconMap, myFlag, enemyFlag):
-	# standard interface to merge 1v1 strats or even larger
-	# compute move for one mouse
-
-	# Level 1: Omniscient
-	# use all the info u need, but only change one mouse pls
-
-	# Level 2: Hivemind
-	# use reconMap instead of omniMap
-
-	# Level 3: Minion
-	# ignore omniMap and only use ur own miceData[idx]
-
-	if ISANT:
-		miceMoves[idx].type = MouseCommand.LEFT
-	else:
-		miceMoves[idx].type = MouseCommand.RIGHT
+		roles[i%len(roles)].computeMouseMove(i, miceMoves, score, miceData, omniMap, reconMap, myFlag, enemyFlag)

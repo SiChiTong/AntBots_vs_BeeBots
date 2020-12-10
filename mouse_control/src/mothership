@@ -148,9 +148,9 @@ if __name__ == '__main__':
 
 	# Choose algorithm here!
 	if ISANT:
-		from algorithms.attacker import initAlg, computeMoves
+		from algorithms.template_multistrat import initAlg, computeMoves
 	else:
-		from algorithms.tagger import initAlg, computeMoves
+		from algorithms.template_multistrat import initAlg, computeMoves
 
 	try:
 		main()
