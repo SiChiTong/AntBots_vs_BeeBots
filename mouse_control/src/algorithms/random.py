@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import rospy
 
+import random
+
 from mouse_description.msg import MouseCommand
 
 # constants
@@ -8,12 +10,13 @@ WORLD_HEIGHT = rospy.get_param('/WORLD_HEIGHT')
 WORLD_WIDTH = rospy.get_param('/WORLD_WIDTH')
 
 # code to run before node even starts
-print('Hello! I\'m the template algorithm!')
+print('Hello! I\'m the random algorithm!')
 
 # private variables
 myFlag = None
 enemyFlag = None
 reconMap = [[' ' for j in range(WORLD_HEIGHT)] for i in range(WORLD_WIDTH)]
+moves = [MouseCommand.FORWARD, MouseCommand.LEFT, MouseCommand.RIGHT, MouseCommand.STOP]
 
 # helpers
 def computeFlags(rmap):
@@ -58,22 +61,5 @@ def computeMoves(miceMoves, score, miceData, omniMap):
 	# Compute some moves
 	# keep in mind ants go first, then bees, but tag and point logic doesn't apply until bees are done
 	for i in range(NUM):
-		computeMouseMove(i, miceMoves, score, miceData, omniMap, reconMap, myFlag, enemyFlag)
-
-def computeMouseMove(idx, miceMoves, score, miceData, omniMap, reconMap, myFlag, enemyFlag):
-	# standard interface to merge 1v1 strats or even larger
-	# compute move for one mouse
-
-	# Level 1: Omniscient
-	# use all the info u need, but only change one mouse pls
-
-	# Level 2: Hivemind
-	# use reconMap instead of omniMap
-
-	# Level 3: Minion
-	# ignore omniMap and only use ur own miceData[idx]
-
-	if ISANT:
-		miceMoves[idx].type = MouseCommand.LEFT
-	else:
-		miceMoves[idx].type = MouseCommand.RIGHT
+		miceMoves[i].type = random.choice(moves)
+		

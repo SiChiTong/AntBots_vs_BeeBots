@@ -105,3 +105,24 @@ Check out the .txt files.
 	F // flag
 
 Numbering for ants and bees is from 0 up, left to right, bottom to top, from the perspective of that team's side. Ants should be at the bottom. All robots start facing the opposite side of the map. The flag is associated with the team whose half of the map it is. Map should be evenly dividable into top and bottom halves.
+
+## Algorithms
+
+Change the bottom of mouse_control/src/mothership to pick an algorithm for each team.
+
+	# Level 0: Test
+	random.py
+	template.py
+	template_multistrat.py
+
+	# Level 1: Omniscient
+	attacker.py
+	blind_astar.py
+	naive_astar.py
+	tagger.py
+
+	# Level 2: Hivemind
+	matstar.py
+
+	# Level 3: Minion
+	m3tstar.py

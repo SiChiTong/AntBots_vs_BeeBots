@@ -9,6 +9,7 @@ from . import path_finding
 # constants
 WORLD_HEIGHT = rospy.get_param('/WORLD_HEIGHT')
 WORLD_WIDTH = rospy.get_param('/WORLD_WIDTH')
+reconMap = [[' ' for j in range(WORLD_HEIGHT)] for i in range(WORLD_WIDTH)]
 
 # code to run before node even starts
 print('Hello! I\'m the tagger algorithm!')
@@ -57,7 +58,7 @@ def getClosestEnemyInRmap(sx, sy, rmap):
 	return closestEnemyX, closestEnemyY, closestEnemyManhattanDist
 	
 
-def computeMoves(miceMoves, score, miceData, reconMap):
+def computeMoves(miceMoves, score, miceData, omniMap):
 	# miceMoves - modify this with the moves u wanna do
 	# score - current score, see mouse_control/msg/Score.msg
 	# miceData - telemetry data from each mouse, see mouse_description/msg/MouseData.msg
@@ -66,18 +67,21 @@ def computeMoves(miceMoves, score, miceData, reconMap):
 	# First call should not have any flags captured, so can grab flag locations from there
 	# keep in mind these are base locations, need to re-search if flag is stolen
 	if not (myFlag and enemyFlag):
-		computeFlags(reconMap)
+		computeFlags(omniMap)
 
 	# Level 1: Omnisas pfcient - available data
 	for i in range(NUM):
-		current_mouse = miceData[i]
-		mx, my = current_mouse.x, current_mouse.y
-		mang = current_mouse.ang
-		if 'F' in reconMap[mx][my]:
-			nx, ny = myFlag
-		else: 
-			nx, ny = enemyFlag
-		traj = path_finding.djistrka(mx, my, mang, nx, ny, ENEMYCHAR, reconMap, WORLD_HEIGHT, WORLD_WIDTH)
-		for (a, s) in traj: print(f"A: {a} s: {s}")
-		miceMoves[i].type = traj[0][0]
-		print("Moving Ant: ", miceMoves[i].type)
+		computeMouseMove(i, miceMoves, score, miceData, omniMap, reconMap)
+
+def computeMouseMove(idx, miceMoves, score, miceData, omniMap, reconMap, myFlag, enemyFlag):
+	current_mouse = miceData[idx]
+	mx, my = current_mouse.x, current_mouse.y
+	mang = current_mouse.ang
+	if 'F' in omniMap[mx][my]:
+		nx, ny = myFlag
+	else: 
+		nx, ny = enemyFlag
+	traj = path_finding.djistrka(mx, my, mang, nx, ny, ENEMYCHAR, omniMap, WORLD_HEIGHT, WORLD_WIDTH)
+	# for (a, s) in traj: print(f"A: {a} s: {s}")
+	miceMoves[idx].type = traj[0][0]
+	# print("Moving Ant: ", miceMoves[i].type)
