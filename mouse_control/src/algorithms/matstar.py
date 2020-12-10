@@ -2,8 +2,12 @@
 import rospy
 
 import heapq
+import random
+import copy
 
 from mouse_description.msg import MouseCommand
+
+# A-star with a little bit of chance
 
 # constants
 WORLD_HEIGHT = rospy.get_param('/WORLD_HEIGHT')
@@ -17,6 +21,7 @@ myFlag = None
 enemyFlag = None
 reconMap = [[' ' for j in range(WORLD_HEIGHT)] for i in range(WORLD_WIDTH)]
 dxys = [(1,0),(0,1),(-1,0),(0,-1)] # direction 0-3
+moves = [MouseCommand.FORWARD, MouseCommand.LEFT, MouseCommand.RIGHT, MouseCommand.STOP]
 
 # helpers
 def computeFlags(rmap):
@@ -58,7 +63,17 @@ def computeMoves(miceMoves, score, miceData, omniMap):
 	if not (myFlag and enemyFlag):
 		computeFlags(omniMap)
 
-	# TODO compute reconMap and use that instead
+	# TODO probability map of where things probs are, resetting rn
+	global reconMap
+	reconMap = [[' ' for j in range(WORLD_HEIGHT)] for i in range(WORLD_WIDTH)]
+	# Level 2: copy my half of the map
+	for x in range(WORLD_WIDTH):
+		for y in range(WORLD_HEIGHT//2) if ISANT else range(WORLD_HEIGHT//2, WORLD_HEIGHT):
+			reconMap[x][y] = omniMap[x][y]
+	# Level 2: get sensor data from mice
+	for data in miceData:
+		for t, x, y in zip(data.types, data.xs, data.ys):
+			reconMap[x][y] = t
 
 	# take into account tag radius
 	# assumes map surrounded by walls
@@ -66,28 +81,43 @@ def computeMoves(miceMoves, score, miceData, omniMap):
 	if ISANT:
 		for x in range(WORLD_WIDTH):
 			for y in range(WORLD_HEIGHT):
-				if omniMap[x][y] == '#' or 'A' in omniMap[x][y]:
+				if reconMap[x][y] == '#' or 'A' in reconMap[x][y]:
 					filterMap[x][y] = '#'
-				elif 'B' in omniMap[x][y]:
-					filterMap[x][y] = '#'
-					# TODO sensors if needed
-					# don't care if on ur side bc can tag them
+				elif 'B' in reconMap[x][y]:
+					if y < WORLD_HEIGHT//2: # taggable
+						continue
+					else:
+						filterMap[x][y] = '#'
+						a = int(reconMap[x][y][0])
+						for t in (a,(a+1)%4,(a-1)%4):
+							dx, dy = dxys[t]
+							nx, ny = x+dx, y+dy
+							if ny >= WORLD_HEIGHT//2:
+								filterMap[nx][ny] = '#'
 	else:
 		for x in range(WORLD_WIDTH):
 			for y in range(WORLD_HEIGHT):
-				if omniMap[x][y] == '#' or 'B' in omniMap[x][y]:
+				if reconMap[x][y] == '#' or 'B' in reconMap[x][y]:
 					filterMap[x][y] = '#'
-				elif 'A' in omniMap[x][y]:
-					filterMap[x][y] = '#'
-					# TODO sensors if needed
-					# don't care if on ur side bc can tag them
+				elif 'A' in reconMap[x][y]:
+					if y >= WORLD_HEIGHT//2: # taggable
+						continue
+					else:
+						filterMap[x][y] = '#'
+						a = int(reconMap[x][y][0])
+						for t in (a,(a+1)%4,(a-1)%4):
+							dx, dy = dxys[t]
+							nx, ny = x+dx, y+dy
+							if ny < WORLD_HEIGHT//2:
+								filterMap[nx][ny] = '#'
 
+	# still has potential for deadlock
 	for i in range(NUM):
 		x, y, ang = miceData[i].x, miceData[i].y, miceData[i].ang
 		if 'F' in omniMap[x][y]:
-			miceMoves[i].type = astar((x, y, ang), (myFlag[0], myFlag[1], -1), omniMap)
+			miceMoves[i].type = astar((x, y, ang), (myFlag[0], myFlag[1], -1), filterMap)
 		else:
-			miceMoves[i].type = astar((x, y, ang), (enemyFlag[0], enemyFlag[1], -1), omniMap)
+			miceMoves[i].type = astar((x, y, ang), (enemyFlag[0], enemyFlag[1], -1), filterMap)
 
 def astar(start, end, rmap):
 	# format is (x,y,ang)
@@ -123,8 +153,9 @@ def astar(start, end, rmap):
 		neighs.append((cell[0], cell[1], (cell[2]-1)%4)) # right
 		dx, dy = dxys[cell[2]]
 		nx, ny = cell[0]+dx, cell[1]+dy
-		if rmap[nx][ny] == ' ' or rmap[nx][ny] == 'F': # check wall
-			neighs.append((nx, ny, cell[2])) # forward
+		if nx >= 0 and nx < WORLD_WIDTH and ny >= 0 and ny < WORLD_HEIGHT:
+			if rmap[nx][ny] == ' ' or rmap[nx][ny] == 'F': # check wall
+				neighs.append((nx, ny, cell[2])) # forward
 
 		# add neighbors
 		for ncell in neighs:
@@ -132,6 +163,8 @@ def astar(start, end, rmap):
 			if cost + 1 < ncost:
 				heapq.heappush(pq, (cost+1+heuristic(ncell,end,rmap), ncell))
 				dist[ncell] = cost+1
+				prev[ncell] = cell
+			elif cost+1 == ncost and random.random() < 0.5:
 				prev[ncell] = cell
 
 	# path reconstruction
