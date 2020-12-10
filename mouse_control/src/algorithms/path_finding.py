@@ -176,7 +176,6 @@ def find_closest_enemy(start_state, enemyChar, rMap, height, width):
                 if cost is not None and cost < nearest_distance:
                     nearest_distance = cost 
                     closest_enemy = enemy_state
-    assert(closest_enemy is not None)
     return closest_enemy, nearest_distance
 
 def manhattan_dist(s1, s2):
@@ -218,9 +217,10 @@ LAMBDA_FALSE = lambda x: False
 
 def get_valid_neighbors(state, rMap, height, width, special_valid_cond=LAMBDA_FALSE):
     def is_valid_forward_state(state):
+        if state.x < 0 or state.x >= width or state.y < 0 or state.y >= height:
+            return False
         sc = rMap[state.x][state.y]
-        return 0 <= state.x < width and 0 <= state.y < height \
-            and (' ' == sc or 'F' == sc or special_valid_cond(state))
+        return ' ' == sc or 'F' == sc or special_valid_cond(state)
 
     actions = [MouseCommand.LEFT, MouseCommand.RIGHT, MouseCommand.FORWARD, MouseCommand.STOP]    
     neighbors = []
