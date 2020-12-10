@@ -7,19 +7,18 @@ import copy
 
 from mouse_description.msg import MouseCommand
 
-# A-star with a little bit of chance
+# matstar but Level 3
 
 # constants
 WORLD_HEIGHT = rospy.get_param('/WORLD_HEIGHT')
 WORLD_WIDTH = rospy.get_param('/WORLD_WIDTH')
 
 # code to run before node even starts
-print('Hello! I\'m the matstar algorithm!')
+print('Hello! I\'m the m3tstar algorithm!')
 
 # private variables
 myFlag = None
 enemyFlag = None
-reconMap = [[' ' for j in range(WORLD_HEIGHT)] for i in range(WORLD_WIDTH)]
 dxys = [(1,0),(0,1),(-1,0),(0,-1)] # direction 0-3
 moves = [MouseCommand.FORWARD, MouseCommand.LEFT, MouseCommand.RIGHT, MouseCommand.STOP]
 
@@ -43,78 +42,70 @@ def computeFlags(rmap):
 
 # standard interface functions
 def initAlg(isant, numMice):
-	global ISANT, NUM
+	global ISANT, NUM, reconMaps
 	ISANT = isant
 	NUM = numMice
+	reconMaps = [[[' ' for j in range(WORLD_HEIGHT)] for i in range(WORLD_WIDTH)] for k in range(NUM)]
 
 def computeMoves(miceMoves, score, miceData, omniMap):
-	# miceMoves - modify this with the moves u wanna do
-	# score - current score, see mouse_control/msg/Score.msg
-
-	# Level 1: Omniscient - available data
-	# omniMap - xy-indexed, see mouse_control/msg/Omniscience.msg (also can print out in god node leakMap)
-
-	# Level 2: Hivemind - available data
-	# omniMap - just use your half and ignore the rest
-	# miceData - telemetry data from each mouse, see mouse_description/msg/MouseData.msg
-
 	# First call should not have any flags captured, so can grab flag locations from there
 	# keep in mind these are base locations, need to re-search if flag is stolen
 	if not (myFlag and enemyFlag):
 		computeFlags(omniMap)
 
-	# TODO probability map of where things probs are, resetting rn
-	for x in range(WORLD_WIDTH):
-		for y in range(WORLD_HEIGHT):
-			if reconMap[x][y] != '#':
-				reconMap[x][y] = ' '
-	# Level 2: copy my half of the map
-	for x in range(WORLD_WIDTH):
-		for y in range(WORLD_HEIGHT//2) if ISANT else range(WORLD_HEIGHT//2, WORLD_HEIGHT):
-			reconMap[x][y] = omniMap[x][y]
-	# Level 2: get sensor data from mice
-	for data in miceData:
+	# still has potential for deadlock
+	for i in range(NUM):
+		reconMap = reconMaps[i]
+		# Level 3: reset
+		for x in range(WORLD_WIDTH):
+			for y in range(WORLD_HEIGHT):
+				if reconMap[x][y] != '#':
+					reconMap[x][y] = ' '
+		# Level 3: only use my sensor data
+		data = miceData[i]
 		for t, x, y in zip(data.types, data.xs, data.ys):
 			reconMap[x][y] = t
 
-	# take into account tag radius
-	# assumes map surrounded by walls
-	filterMap = [[' ' for j in range(WORLD_HEIGHT)] for i in range(WORLD_WIDTH)]
-	if ISANT:
-		for x in range(WORLD_WIDTH):
-			for y in range(WORLD_HEIGHT):
-				if reconMap[x][y] == '#' or 'A' in reconMap[x][y]:
-					filterMap[x][y] = '#'
-				elif 'B' in reconMap[x][y]:
-					if y < WORLD_HEIGHT//2: # taggable
-						continue
-					else:
+		# take into account tag radius
+		# assumes map surrounded by walls
+		filterMap = [[' ' for j in range(WORLD_HEIGHT)] for i in range(WORLD_WIDTH)]
+		if ISANT:
+			for x in range(WORLD_WIDTH):
+				for y in range(WORLD_HEIGHT):
+					if reconMap[x][y] == '#' or 'A' in reconMap[x][y]:
 						filterMap[x][y] = '#'
-						a = int(reconMap[x][y][0])
-						for t in (a,(a+1)%4,(a-1)%4):
-							dx, dy = dxys[t]
-							nx, ny = x+dx, y+dy
-							if ny >= WORLD_HEIGHT//2:
-								filterMap[nx][ny] = '#'
-	else:
-		for x in range(WORLD_WIDTH):
-			for y in range(WORLD_HEIGHT):
-				if reconMap[x][y] == '#' or 'B' in reconMap[x][y]:
-					filterMap[x][y] = '#'
-				elif 'A' in reconMap[x][y]:
-					if y >= WORLD_HEIGHT//2: # taggable
-						continue
-					else:
+					elif 'B' in reconMap[x][y]:
+						if y < WORLD_HEIGHT//2: # taggable
+							continue
+						else:
+							filterMap[x][y] = '#'
+							a = int(reconMap[x][y][0])
+							for t in (a,(a+1)%4,(a-1)%4):
+								dx, dy = dxys[t]
+								nx, ny = x+dx, y+dy
+								if ny >= WORLD_HEIGHT//2:
+									filterMap[nx][ny] = '#'
+		else:
+			for x in range(WORLD_WIDTH):
+				for y in range(WORLD_HEIGHT):
+					if reconMap[x][y] == '#' or 'B' in reconMap[x][y]:
 						filterMap[x][y] = '#'
-						a = int(reconMap[x][y][0])
-						for t in (a,(a+1)%4,(a-1)%4):
-							dx, dy = dxys[t]
-							nx, ny = x+dx, y+dy
-							if ny < WORLD_HEIGHT//2:
-								filterMap[nx][ny] = '#'
+					elif 'A' in reconMap[x][y]:
+						if y >= WORLD_HEIGHT//2: # taggable
+							continue
+						else:
+							filterMap[x][y] = '#'
+							a = int(reconMap[x][y][0])
+							for t in (a,(a+1)%4,(a-1)%4):
+								dx, dy = dxys[t]
+								nx, ny = x+dx, y+dy
+								if ny < WORLD_HEIGHT//2:
+									filterMap[nx][ny] = '#'
 
-	# still has potential for deadlock
-	for i in range(NUM):
+		if 'F' not in reconMap[x][y] and random.random() < 0.2:
+			miceMoves[i].type = random.choice(moves)
+			continue
+
 		x, y, ang = miceData[i].x, miceData[i].y, miceData[i].ang
 		if 'F' in omniMap[x][y]:
 			miceMoves[i].type = astar((x, y, ang), (myFlag[0], myFlag[1], -1), filterMap)
