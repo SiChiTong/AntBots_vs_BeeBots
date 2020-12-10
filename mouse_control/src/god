@@ -29,10 +29,10 @@ def leakMap():
 	omnipub.publish(msg)
 
 	# Debug
-	# for y in reversed(range(WORLD_HEIGHT)):
-	# 	for x in range(WORLD_WIDTH):
-	# 		print(reconMap[x][y], end="\t")
-	# 	print()
+	#for y in reversed(range(WORLD_HEIGHT)):
+	#	for x in range(WORLD_WIDTH):
+	#		print(reconMap[x][y], end="\t")
+	#	print()
 
 # Constants
 GRID = rospy.get_param('GRID_SIZE')
