@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <launch>
-	<param name="WORLD_FILE" value="$(find mouse_gazebo)/launch/1v1.txt"/>
+	<param name="WORLD_FILE" value="$(find mouse_gazebo)/launch/2v1.txt"/>
 
 	<!-- Debug aids -->
 	<param name="ANTS_USERCONTROL" value="false"/>

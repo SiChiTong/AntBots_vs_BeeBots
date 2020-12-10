@@ -45,7 +45,9 @@ def initAlg(isant, numMice):
 	# code to run before node even starts
 	print('Hello! I\'m the 1v1 test algorithm!')
 	# initialize other algs
-	attacker_tom.initAlg(isant, numMice, eps=0.4, safety_score=4, manhattan_score=3)
+	#attacker_tom.initAlg(isant, numMice, eps=0.4, safety_score=4, manhattan_score=3)
+	attacker_tom.initAlg(isant, numMice, eps=0.1, safety_score=4, manhattan_score=0)
+
 	#attacker.initAlg(isant, numMice)
 
 def computeMoves(miceMoves, score, miceData, omniMap):
@@ -67,6 +69,6 @@ def computeMoves(miceMoves, score, miceData, omniMap):
 	# Compute some moves
 	# keep in mind ants go first, then bees, but tag and point logic doesn't apply until bees are done
 	#roles = [attacker]
-	roles = [attacker_tom]
+	roles = [attacker_tom, attacker_tom]
 	for i in range(NUM):
 		roles[i%len(roles)].computeMouseMove(i, miceMoves, score, miceData, omniMap, reconMap, myFlag, enemyFlag)
