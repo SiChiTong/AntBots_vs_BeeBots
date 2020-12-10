@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 import rospy
 import math 
+import random 
 
 from mouse_description.msg import MouseCommand
 from . import path_finding
 from .robot_state import RobotState
+
 
 # constants
 WORLD_HEIGHT = rospy.get_param('/WORLD_HEIGHT')
@@ -34,16 +36,20 @@ def computeFlags(rmap):
 					myFlag = (x,y)
 
 # standard interface functions
-def initAlg(isant, numMice):
-	print('Hello! I\'m the attacker algorithm!')
-	global ISANT, NUM, ENEMYCHAR
+def initAlg(isant, numMice, eps=0.25, safety_score=3, manhattan_score=2):
+	# code to run before node even starts
+	print('Hello! I\'m the attacker tom algorithm!')
+	global ISANT, NUM, ENEMYCHAR, RANDOM_EPS, SAFETY_SCORE, MANHATTAN_SCORE
 	ISANT = isant
 	NUM = numMice
 	if isant: 
 		ENEMYCHAR = 'B'
 	else: 
 		ENEMYCHAR = 'A'
-
+	RANDOM_EPS = eps
+	SAFETY_SCORE = safety_score
+	MANHATTAN_SCORE = manhattan_score
+	
 def computeMoves(miceMoves, score, miceData, omniMap):
 	# miceMoves - modify this with the moves u wanna do
 	# score - current score, see mouse_control/msg/Score.msg
@@ -60,16 +66,25 @@ def computeMoves(miceMoves, score, miceData, omniMap):
 		computeMouseMove(i, miceMoves, score, miceData, omniMap, reconMap)
 
 def computeMouseMove(idx, miceMoves, score, miceData, omniMap, reconMap, myFlag, enemyFlag):
-	current_mouse = miceData[idx]
-	mx, my = current_mouse.x, current_mouse.y
-	mang = current_mouse.ang
-	if 'F' in omniMap[mx][my]:
-		nx, ny = myFlag
+	if random.random() < RANDOM_EPS:
+		miceMoves[idx].type = random.randint(0, 3)
 	else: 
-		nx, ny = enemyFlag
-	start_state = RobotState(mx, my, mang)
-	flag_state = RobotState(nx, ny, 0)
-	traj = path_finding.djistrka(start_state, flag_state, omniMap, WORLD_HEIGHT, WORLD_WIDTH, path=True, ignore_theta=True)
-	# for (a, s) in traj: print(f"A: {a} s: {s}")
-	miceMoves[idx].type = traj[0][0]
+		current_mouse = miceData[idx]
+		mx, my = current_mouse.x, current_mouse.y
+		mang = current_mouse.ang
+		if 'F' in omniMap[mx][my]:
+			fx, fy = myFlag
+		else: 
+			fx, fy = enemyFlag
+		start_state = RobotState(mx, my, mang)
+		flag_state = RobotState(fx, fy, 0)
+		traj = path_finding.djistrka(start_state, flag_state, omniMap, WORLD_HEIGHT, WORLD_WIDTH, path=True, ignore_theta=True)
+		enemy_state, djistrka_dist = path_finding.find_closest_enemy(start_state, ENEMYCHAR, omniMap, WORLD_HEIGHT, WORLD_WIDTH)
+		man_dist = path_finding.manhattan_dist(start_state, enemy_state)
+		#print(f"Djistrka distance: {djistrka_dist} Manhattan distance: {man_dist} enemy: {enemy_state}, start: {start_state} ")	
+		if djistrka_dist <= SAFETY_SCORE or man_dist <= MANHATTAN_SCORE: 
+			miceMoves[idx].type, _, _ = path_finding.move_away_from_enemy(start_state, enemy_state, omniMap, WORLD_HEIGHT, WORLD_WIDTH, traj[0][0])
+			#print("SELECTING SAFETY MOVE")
+		else: 
+			miceMoves[idx].type = traj[0][0]
 	# print("Moving Ant: ", miceMoves[i].type)
