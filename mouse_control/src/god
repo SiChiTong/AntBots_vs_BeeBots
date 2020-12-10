@@ -50,6 +50,8 @@ antControl = []
 beeControl = []
 antVision = []
 beeVision = []
+antCamp = [False] * NUM_ANTS
+beeCamp = [False] * NUM_BEES
 
 def dataCallback(data, args):
 	args[0][args[1]] = data
@@ -214,6 +216,11 @@ def tagLogic():
 		cmd.x, cmd.y, cmd.ang = x, y, 3
 		beeControl[i].publish(cmd)
 
+	# breaks abstraction a bit
+	global antScore, beeScore
+	antScore += len(beeTags) * 50
+	beeScore += len(antTags) * 50
+
 	# changes take some time to propagate back
 	if antTags or beeTags:
 		rospy.sleep(0.2)
@@ -282,16 +289,26 @@ def pointLogic():
 		if beeFlagCaptured and beeFlagIndex == i: # exempt if u have flag
 			continue
 		elif not antFlagCaptured and antData[i].x == antFlag[0] and antData[i].y == antFlag[1]: # no camping
-			antScore -= 100
+			if antCamp[i]:
+				antScore -= 100
+			else:
+				antCamp[i] = True
+				antScore -= 1
 		elif antData[i].y < WORLD_HEIGHT//2: # can't stay on your side
+			antCamp[i] = False
 			antScore -= 1
 
 	for i in range(NUM_BEES):
 		if antFlagCaptured and antFlagIndex == i: # exempt if u have flag
 			continue
 		elif not beeFlagCaptured and beeData[i].x == beeFlag[0] and beeData[i].y == beeFlag[1]: # no camping
-			beeScore -= 100
+			if beeCamp[i]:
+				beeScore -= 100
+			else:
+				beeCamp[i] = True
+				beeScore -= 1
 		elif beeData[i].y >= WORLD_HEIGHT//2: # can't stay on your side
+			beeCamp[i] = False
 			beeScore -= 1
 
 	if antFlagCaptured and beeData[antFlagIndex].x == beeFlag[0] and beeData[antFlagIndex].y == beeFlag[1]:
