@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+import copy 
+from collections import defaultdict
+import heapq
+
+from mouse_description.msg import MouseCommand
+
 # determines path to take based on A* search algorithm
 def astar(sx, sy, ex, ey, reconMap, height, width):
     found_path = False
@@ -98,3 +105,121 @@ def isValid(tuple, reconMap):
     if reconMap[x][y] == 'B':
         return False
     return True
+
+
+def get_move(astar_path, mx, my, mang):
+    nextx, nexty = 0, 0
+    for node in astar_path:
+        if node[4] == mx and node[5] == my:
+            nextx = node[0] - mx
+            nexty = node[1] - my
+
+    if (nextx == 1):
+        # go EAST
+        if mang == 0:
+            return MouseCommand.FORWARD
+        else:
+            return MouseCommand.LEFT
+    elif (nextx == -1):
+        # go WEST
+        if mang == 2:
+            return MouseCommand.FORWARD
+        else:
+            return MouseCommand.LEFT
+    elif (nexty == 1):
+        #go NORTH
+        if mang == 1:
+            return MouseCommand.FORWARD
+        else:
+            return MouseCommand.LEFT
+    elif (nexty == -1):
+        #go SOUTH
+        if mang == 3:
+            return MouseCommand.FORWARD
+        else:
+            return MouseCommand.LEFT
+
+class RobotState(object):
+    def __init__(self, x, y, theta):
+        self.x = x
+        self.y = y
+        self.theta = theta
+
+    def __eq__(self, other):
+        return other and self.x == other.x and self.y == other.y and self.theta == other.theta
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self): 
+        return hash((self.x, self.y, self.theta))
+
+    def __copy__(self):
+        return RobotState(self.x, self.y, self.theta)
+
+    def __lt__(self, other):
+        return other.x < self.x or other.y < self.y
+
+    def __repr__(self):
+        return f"(x: {self.x}, y: {self.y}, t: {self.theta})"
+
+def djistrka(sx, sy, st, ex, ey, enemy_char, rMap, height, width):
+    start_state = RobotState(sx, sy, st)
+    q, visited, cost_map, parent = [(0, start_state)], set(), defaultdict(lambda: float('inf')), {}
+    while q:
+        (cost, state) = heapq.heappop(q)
+        #print(f"Cost: {cost} State: {state}, sx: {sx}, sy: {sy}, ex: {ex}, ey: {ey}, height: {height}, width: {width}")
+        if state in visited: continue
+        if state.x == ex and state.y == ey:
+            return get_dijstrka_trajectory(start=start_state, end=state, parent=parent)
+        visited.add(state)
+        for (action, neighbor) in get_valid_neighbors(state, enemy_char, rMap, height, width):
+            if neighbor in visited: continue 
+            prev_cost = cost_map[neighbor]
+            new_cost = cost + 1
+            if prev_cost is None or new_cost < prev_cost:
+                cost_map[neighbor] = new_cost
+                parent[neighbor] = (action, state)
+                heapq.heappush(q, (new_cost, neighbor))
+    return None 
+
+def get_dijstrka_trajectory(start, end, parent):
+    action, state, trajectory = None, end, []
+    while state != start:
+        action, parent_state = parent[state]
+        trajectory.append((action, state))
+        state = parent_state 
+    #for (a, s) in trajectory: print(f"Original A: {a} s: {s}")
+    return list(reversed(trajectory))
+
+
+def get_valid_neighbors(state, enemy_char, rMap, height, width):
+    def is_valid_forward_state(state):
+        sc = rMap[state.x][state.y]
+        return 0 <= state.x < width and 0 <= state.y < height \
+            and (' ' == sc or 'F' == sc or enemy_char in sc)
+
+    actions = [MouseCommand.LEFT, MouseCommand.RIGHT, MouseCommand.FORWARD, MouseCommand.STOP]    
+    neighbors = []
+    for a in actions: 
+        neighbor = copy.copy(state)
+        if a == MouseCommand.LEFT:
+            neighbor.theta = (state.theta + 1) % 4
+            neighbors.append((a, neighbor))
+        elif a == MouseCommand.RIGHT:
+            neighbor.theta = (state.theta + 3) % 4
+            neighbors.append((a, neighbor))
+        elif a == MouseCommand.STOP:
+            neighbors.append((a, neighbor))
+        else: 
+            if state.theta == 0: #E
+                neighbor.x += 1
+            elif state.theta == 1: #N
+                neighbor.y += 1
+            elif state.theta == 2: #W
+                neighbor.x -= 1
+            else: #S
+                neighbor.y -= 1   
+            if is_valid_forward_state(neighbor):
+                neighbors.append((a, neighbor))     
+    return neighbors

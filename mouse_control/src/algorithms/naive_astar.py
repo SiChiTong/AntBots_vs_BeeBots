@@ -52,7 +52,6 @@ def computeMoves(miceMoves, score, miceData, reconMap):
 	# keep in mind these are base locations, need to re-search if flag is stolen
 	if not (myFlag and enemyFlag):
 		computeFlags(reconMap)
-
 	# Compute some moves
 	if ISANT:
 		for i in range(NUM):
