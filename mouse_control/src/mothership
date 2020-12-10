@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import rospy
 
+import copy
 import numpy as np
 from enum import Enum
 
@@ -126,8 +127,25 @@ def main():
 			if transition:
 				transition = False
 				state = States.WAITALIGN
-				for pub, cmd in zip(miceControl, miceMoves):
-					pub.publish(cmd)
+
+				# prevent intrateam collisions
+				updateMap = copy.deepcopy(reconMap)
+				dxys = [(1,0),(0,1),(-1,0),(0,-1)] # direction 0-3
+
+				for dat, pub, cmd in zip(miceData, miceControl, miceMoves):
+					if cmd.type == MouseCommand.FORWARD:
+						dx, dy = dxys[dat.ang]
+						nx, ny = dat.x+dx, dat.y+dy
+						if updateMap[nx][ny] == ' ' or updateMap[nx][ny] == 'F':
+							updateMap[nx][ny], updateMap[dat.x][dat.y] = updateMap[dat.x][dat.y], updateMap[nx][ny]
+							pub.publish(cmd)
+						else:
+							rospy.logerr('alg wanted to run into a wall!')
+							c = MouseCommand()
+							c.type = MouseCommand.STOP
+							pub.publish(c)
+					else:
+						pub.publish(cmd)
 		elif state == States.WAITALIGN:
 			if allAligned():
 				state = States.WAITCOMP
