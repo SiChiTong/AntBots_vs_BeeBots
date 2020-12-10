@@ -36,10 +36,10 @@ def computeFlags(rmap):
 					myFlag = (x,y)
 
 # standard interface functions
-def initAlg(isant, numMice, eps=0.25, safety_score=2):
+def initAlg(isant, numMice, eps=0.25, safety_score=3, manhattan_score=2):
 	# code to run before node even starts
 	print('Hello! I\'m the attacker tom algorithm!')
-	global ISANT, NUM, ENEMYCHAR, RANDOM_EPS, SAFETY_SCORE
+	global ISANT, NUM, ENEMYCHAR, RANDOM_EPS, SAFETY_SCORE, MANHATTAN_SCORE
 	ISANT = isant
 	NUM = numMice
 	if isant: 
@@ -48,6 +48,7 @@ def initAlg(isant, numMice, eps=0.25, safety_score=2):
 		ENEMYCHAR = 'A'
 	RANDOM_EPS = eps
 	SAFETY_SCORE = safety_score
+	MANHATTAN_SCORE = manhattan_score
 	
 def computeMoves(miceMoves, score, miceData, omniMap):
 	# miceMoves - modify this with the moves u wanna do
@@ -78,9 +79,12 @@ def computeMouseMove(idx, miceMoves, score, miceData, omniMap, reconMap, myFlag,
 		start_state = RobotState(mx, my, mang)
 		flag_state = RobotState(fx, fy, 0)
 		traj = path_finding.djistrka(start_state, flag_state, omniMap, WORLD_HEIGHT, WORLD_WIDTH, path=True, ignore_theta=True)
-		enemy_state, distance = path_finding.find_closest_enemy(start_state, ENEMYCHAR, omniMap, WORLD_HEIGHT, WORLD_WIDTH)
-		if distance <= SAFETY_SCORE: 
-			miceMoves[idx].type, _ = path-finding.move_away_from_enemy(start_state, enemy_state, RMAP, WORLD_HEIGHT, WORLD_WIDTH)
+		enemy_state, djistrka_dist = path_finding.find_closest_enemy(start_state, ENEMYCHAR, omniMap, WORLD_HEIGHT, WORLD_WIDTH)
+		man_dist = path_finding.manhattan_dist(start_state, enemy_state)
+		#print(f"Djistrka distance: {djistrka_dist} Manhattan distance: {man_dist} enemy: {enemy_state}, start: {start_state} ")	
+		if djistrka_dist <= SAFETY_SCORE or man_dist <= MANHATTAN_SCORE: 
+			miceMoves[idx].type, _, _ = path_finding.move_away_from_enemy(start_state, enemy_state, omniMap, WORLD_HEIGHT, WORLD_WIDTH, traj[0][0])
+			#print("SELECTING SAFETY MOVE")
 		else: 
 			miceMoves[idx].type = traj[0][0]
 	# print("Moving Ant: ", miceMoves[i].type)

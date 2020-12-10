@@ -179,14 +179,22 @@ def find_closest_enemy(start_state, enemyChar, rMap, height, width):
     assert(closest_enemy is not None)
     return closest_enemy, nearest_distance
 
-def move_away_from_enemy(start_state, enemy_state, rMap, height, width):
-    best_action, cost = 3, -float('inf')
+def manhattan_dist(s1, s2):
+    return abs(s1.x - s2.x) + abs(s1.y - s2.y)
+
+def move_away_from_enemy(start_state, enemy_state, rMap, height, width, old_action):
+    best_action, best_dcost, best_mcost = 3, -float('inf'), float('inf')
     for (action, state) in get_valid_neighbors(start_state, rMap, height, width):
-        new_cost = djistrka(enemy_state, state, rMap, height, width, path=False, ignore_theta=False)
-        if new_cost > cost: 
-            cost = new_cost
+        if action == 3: continue
+        new_dcost = djistrka(enemy_state, state, rMap, height, width, path=False, ignore_theta=False)
+        new_mcost = manhattan_dist(enemy_state, state)
+        #print(f"new dcost: {new_dcost}, new_mcost: {new_mcost}, action: {action}, state: {state}, enemy_state: {enemy_state}, start_state: {start_state}")
+        if best_dcost < new_dcost or (new_dcost == best_dcost and best_mcost < new_mcost): 
+            best_dcost = new_dcost
+            best_mcost = new_mcost
             best_action = action 
-    return best_action, cost
+    #print(f"move away action: {best_action}")
+    return best_action, best_dcost, best_mcost
 
 def get_dijstrka_trajectory(start, end, parent):
     action, state, trajectory = None, end, []
