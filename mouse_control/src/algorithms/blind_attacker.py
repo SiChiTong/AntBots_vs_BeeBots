@@ -71,6 +71,19 @@ def computeMoves(miceMoves, score, miceData, omniMap):
 	global reconMap
 	utils.updateHiveReconMap(reconMap, NUM, WORLD_WIDTH, WORLD_HEIGHT, miceData, enemyFlag, myFlag)
 
+	# THE GUI
+	orien_symbols = {'0': ">", '1': "^", '2': "<", '3': "v"}
+	for y in reversed(range(WORLD_HEIGHT)):
+		for x in range(WORLD_WIDTH):
+			r = reconMap[x][y]
+			if 'B' in r or 'A' in r:
+				angle = r[0]
+				a = orien_symbols[angle] + r[1:]
+			else: 
+				a = r
+			print(f'{a:^5}', end="")
+		print()
+
 	# run dijstrka
 	for i in range(NUM):
 		cm = miceData[i]
