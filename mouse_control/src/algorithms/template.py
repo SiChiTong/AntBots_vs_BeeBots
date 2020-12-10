@@ -13,6 +13,7 @@ print('Hello! I\'m the template algorithm!')
 # private variables
 myFlag = None
 enemyFlag = None
+reconMap = [[' ' for j in range(WORLD_HEIGHT)] for i in range(WORLD_WIDTH)]
 
 # helpers
 def computeFlags(rmap):
@@ -38,19 +39,21 @@ def initAlg(isant, numMice):
 	ISANT = isant
 	NUM = numMice
 
-def computeMoves(miceMoves, score, miceData, reconMap):
+def computeMoves(miceMoves, score, miceData, omniMap):
 	# miceMoves - modify this with the moves u wanna do
 	# score - current score, see mouse_control/msg/Score.msg
-	# miceData - telemetry data from each mouse, see mouse_description/msg/MouseData.msg
-	# TODO add sensor data from each mouse to do level 2 knowledge
 
 	# Level 1: Omniscient - available data
-	# reconMap - xy-indexed, see mouse_control/msg/Omniscience.msg (also can print out in god node leakMap)
+	# omniMap - xy-indexed, see mouse_control/msg/Omniscience.msg (also can print out in god node leakMap)
+
+	# Level 2: Hivemind - available data
+	# omniMap - just use your half and ignore the rest
+	# miceData - telemetry data from each mouse, see mouse_description/msg/MouseData.msg
 
 	# First call should not have any flags captured, so can grab flag locations from there
 	# keep in mind these are base locations, need to re-search if flag is stolen
 	if not (myFlag and enemyFlag):
-		computeFlags(reconMap)
+		computeFlags(omniMap)
 
 	# Compute some moves
 	# keep in mind ants go first, then bees, but tag and point logic doesn't apply until bees are done

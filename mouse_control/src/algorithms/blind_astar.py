@@ -3,6 +3,7 @@ import rospy
 
 from mouse_description.msg import MouseCommand
 from . import path_finding
+import copy
 
 # constants
 WORLD_HEIGHT = rospy.get_param('/WORLD_HEIGHT')
@@ -14,6 +15,7 @@ print('Hello! I\'m the blind A* algorithm!')
 # private variables
 myFlag = None
 enemyFlag = None
+reconMap = [[' ' for j in range(WORLD_HEIGHT)] for i in range(WORLD_WIDTH)]
 
 # Level 1: Total Omniscience
 
@@ -41,7 +43,7 @@ def initAlg(isant, numMice):
 	ISANT = isant
 	NUM = numMice
 
-def computeMoves(miceMoves, score, miceData, reconMap):
+def computeMoves(miceMoves, score, miceData, omniMap):
 	# miceMoves - modify this with the moves u wanna do
 	# score - current score, see mouse_control/msg/Score.msg
 	# miceData - telemetry data from each mouse, see mouse_description/msg/MouseData.msg
@@ -53,7 +55,9 @@ def computeMoves(miceMoves, score, miceData, reconMap):
 	# First call should not have any flags captured, so can grab flag locations from there
 	# keep in mind these are base locations, need to re-search if flag is stolen
 	if not (myFlag and enemyFlag):
-		computeFlags(reconMap)
+		computeFlags(omniMap)
+
+	global reconMap
 
 	# Compute some moves
 	if ISANT:
@@ -69,7 +73,7 @@ def computeMoves(miceMoves, score, miceData, reconMap):
 			# created an updated recon map with radius information here:
 			updatedReconMap = copy.deepcopy(reconMap)
 
-			for i in len(types):
+			for i in range(len(types)):
 				newx, newy = xs[i], ys[i]
 				updatedReconMap[newx][newy] = types[i]
 
@@ -126,7 +130,7 @@ def computeMoves(miceMoves, score, miceData, reconMap):
 			# created an updated recon map with radius information here:
 			updatedReconMap = copy.deepcopy(reconMap)
 
-			for i in len(types):
+			for i in range(len(types)):
 				newx, newy = xs[i], ys[i]
 				updatedReconMap[newx][newy] = types[i]
 
@@ -171,4 +175,4 @@ def computeMoves(miceMoves, score, miceData, reconMap):
 				else:
 					miceMoves[i].type = MouseCommand.LEFT
 
-	return updatedReconMap
+	reconMap = updatedReconMap
