@@ -9,6 +9,7 @@ from . import path_finding
 # constants
 WORLD_HEIGHT = rospy.get_param('/WORLD_HEIGHT')
 WORLD_WIDTH = rospy.get_param('/WORLD_WIDTH')
+reconMap = [[' ' for j in range(WORLD_HEIGHT)] for i in range(WORLD_WIDTH)]
 
 # code to run before node even starts
 print('Hello! I\'m the tagger algorithm!')
@@ -57,20 +58,26 @@ def getClosestEnemyInRmap(sx, sy, rmap):
 	return closestEnemyX, closestEnemyY, closestEnemyManhattanDist
 	
 
-def computeMoves(miceMoves, score, miceData, reconMap):
+def computeMoves(miceMoves, score, miceData, omniMap):
 	# miceMoves - modify this with the moves u wanna do
 	# score - current score, see mouse_control/msg/Score.msg
 	# miceData - telemetry data from each mouse, see mouse_description/msg/MouseData.msg
 	# Ants go to goal and bees tag.
 
+	if not (myFlag and enemyFlag):
+		computeFlags(omniMap)
+
 	# Level 1: Omnisas pfcient - available data
 	for i in range(NUM):
-		current_mouse = miceData[i]
-		mx, my = current_mouse.x, current_mouse.y
-		mang = current_mouse.ang
-		enemy_x, enemy_y, enemy_dist = getClosestEnemyInRmap(mx, my, reconMap)
-		assert enemy_x != -1 and enemy_y != -1 
-		traj = path_finding.djistrka(mx, my, mang, enemy_x, enemy_y, ENEMYCHAR, reconMap, WORLD_HEIGHT, WORLD_WIDTH)
-		for (a, s) in traj: print(f"A: {a} s: {s}")
-		miceMoves[i].type = traj[0][0]
-		print("Moving Bee: ", miceMoves[i].type)
+		computeMouseMove(i, miceMoves, score, miceData, omniMap, reconMap)
+
+def computeMouseMove(idx, miceMoves, score, miceData, omniMap, reconMap, myFlag, enemyFlag):
+	current_mouse = miceData[idx]
+	mx, my = current_mouse.x, current_mouse.y
+	mang = current_mouse.ang
+	enemy_x, enemy_y, enemy_dist = getClosestEnemyInRmap(mx, my, omniMap)
+	assert enemy_x != -1 and enemy_y != -1 
+	traj = path_finding.djistrka(mx, my, mang, enemy_x, enemy_y, ENEMYCHAR, omniMap, WORLD_HEIGHT, WORLD_WIDTH)
+	# for (a, s) in traj: print(f"A: {a} s: {s}")
+	miceMoves[idx].type = traj[0][0]
+	# print("Moving Bee: ", miceMoves[i].type)
