@@ -169,7 +169,7 @@ if __name__ == '__main__':
 		#from algorithms.attacker_tom import initAlg, computeMoves
 		from algorithms.blind_attacker import initAlg, computeMoves
 	else:
-		from algorithms.blind_attacker import initAlg, computeMoves
+		from algorithms.blind_defender import initAlg, computeMoves
 		#from algorithms.template_multistrat import initAlg, computeMoves
 
 	try:
