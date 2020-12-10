@@ -14,7 +14,7 @@ WORLD_HEIGHT = rospy.get_param('/WORLD_HEIGHT')
 WORLD_WIDTH = rospy.get_param('/WORLD_WIDTH')
 
 # code to run before node even starts
-print('Hello! I\'m the blind A* algorithm!')
+print('Hello! I\'m the blind attacker* algorithm!')
 
 # private variables
 myFlag = None

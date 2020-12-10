@@ -67,8 +67,7 @@ def computeMouseMove(idx, miceMoves, score, miceData, omniMap, reconMap, myFlag,
 	start_state = RobotState(mx, my, mang)
 	enemy_state, _ = path_finding.find_closest_enemy(start_state, ENEMYCHAR, omniMap, WORLD_HEIGHT, WORLD_WIDTH)
 	traj = path_finding.djistrka(start_state, enemy_state, omniMap, WORLD_HEIGHT, WORLD_WIDTH, path=True, ignore_theta=True)
-	# for (a, s) in traj: print(f"A: {a} s: {s}")
-	miceMoves[idx].type = traj[0][0]
+		miceMoves[idx].type = traj[0][0]
 	if not utils.in_my_half(ISANT, WORLD_HEIGHT, traj[0][1]):
 		miceMoves[idx].type = MouseCommand.STOP
 

@@ -14,7 +14,7 @@ WORLD_HEIGHT = rospy.get_param('/WORLD_HEIGHT')
 WORLD_WIDTH = rospy.get_param('/WORLD_WIDTH')
 
 # code to run before node even starts
-print('Hello! I\'m the blind A* algorithm!')
+print('Hello! I\'m the blind defender algorithm!')
 
 # private variables
 myFlag = None
@@ -46,14 +46,26 @@ def computeFlags(rmap):
 
 # standard interface functions
 def initAlg(isant, numMice):
-	global ISANT, NUM, ENEMYCHAR, lastxs, lastys, currentxs, currentys
+	global ISANT, NUM, ENEMYCHAR, GOALCAMPDX, GOALCAMPDY
 	ISANT = isant
 	NUM = numMice
 	if ISANT: 
 		ENEMYCHAR = 'B'
 	else: 
 		ENEMYCHAR = 'A'
-
+	GOALCAMPDX, GOALCAMPDY = [], []
+	L = 2
+	for i in range(NUM):
+		fx = 0
+		while True: 
+			fx = random.randint(-L, L)
+			if fx != 0: break 
+		fy = 0
+		while True: 
+			fy = random.randint(-L, L)
+			if fy != 0: break 
+		GOALCAMPDX.append(fx)
+		GOALCAMPDY.append(fy)
 
 def computeMoves(miceMoves, score, miceData, omniMap):
 	# miceMoves - modify this with the moves u wanna do
@@ -74,16 +86,36 @@ def computeMoves(miceMoves, score, miceData, omniMap):
 
 	# run dijstrka
 	for i in range(NUM):
-		cm = miceData[i]
-		start_state = RobotState(cm.x, cm.y, cm.ang)
-		if 'F' in reconMap[cm.x][cm.y]:
-			nx, ny = myFlag
-		else: 
-			nx, ny = enemyFlag
+		computeMouseMove(i, miceMoves, score, miceData, omniMap, reconMap)
+
+
+
+
+def computeMouseMove(idx, miceMoves, score, miceData, omniMap, reconMap):
+	current_mouse = miceData[idx]
+	mx, my = current_mouse.x, current_mouse.y
+	mang = current_mouse.ang
+	start_state = RobotState(mx, my, mang)
+	enemy_state, _ = path_finding.find_closest_enemy(start_state, ENEMYCHAR, reconMap, WORLD_HEIGHT, WORLD_WIDTH)
+	
+	if enemy_state is None:
+		ex = GOALCAMPDX[idx]
+		ey = GOALCAMPDY[idx]
+		nx = min(max(myFlag[0] + ex, 0), WORLD_WIDTH - 1)
+		ny = min(max(myFlag[1] + ey, 0), WORLD_HEIGHT - 1)
 		flag_state = RobotState(nx, ny, 0)
-		traj = path_finding.djistrka(start_state, flag_state, reconMap, WORLD_HEIGHT, WORLD_WIDTH, path=True, ignore_theta=True, debug=False)
-		if len(traj) != 0:
-			miceMoves[i].type = traj[0][0]
+		print(f"flag_state: {flag_state}")
+		traj = path_finding.djistrka(start_state, flag_state, reconMap, WORLD_HEIGHT, WORLD_WIDTH, path=True, ignore_theta=True)
+		if len(traj) ==  0: 
+			miceMoves[idx].type = MouseCommand.STOP
 		else: 
-			miceMoves[i].type = random.randint(0, 2)
+			miceMoves[idx].type = traj[0][0]
+		if not utils.in_my_half(ISANT, WORLD_HEIGHT, traj[0][1]):
+			miceMoves[idx].type = MouseCommand.STOP
+	else: 
+		traj = path_finding.djistrka(start_state, enemy_state, reconMap, WORLD_HEIGHT, WORLD_WIDTH, path=True, ignore_theta=True)
+		# for (a, s) in traj: print(f"A: {a} s: {s}")
+		miceMoves[idx].type = traj[0][0]
+		if not utils.in_my_half(ISANT, WORLD_HEIGHT, traj[0][1]):
+			miceMoves[idx].type = MouseCommand.STOP
 	
