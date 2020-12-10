@@ -5,7 +5,7 @@ from mouse_description.msg import MouseCommand
 
 # Import other algorithms
 import algorithms.template as template
-import algorithms.tagger as tagger
+import algorithms.defender as defender
 import algorithms.attacker_tom as attacker_tom
 import algorithms.attacker as attacker
 

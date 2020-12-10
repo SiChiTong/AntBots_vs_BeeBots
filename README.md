@@ -123,7 +123,9 @@ Change the bottom of mouse_control/src/mothership to pick an algorithm for each 
 	attacker.py
 	blind_astar.py
 	naive_astar.py
-	tagger.py
+	defender.py
+	defender_tom.py
+	attacker_tom.py
 
 	# Level 2: Hivemind
 	matstar.py
